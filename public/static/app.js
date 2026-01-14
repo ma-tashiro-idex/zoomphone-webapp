@@ -248,12 +248,17 @@ async function loadDashboard() {
         html += '</div>';
         html += '</div>';
         
-        // Deals List with Add Button
+        // Deals List with Add and Import Buttons
         html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; margin-bottom: 15px;">';
         html += '<h3 style="margin: 0; color: #2d3748;">💼 案件一覧</h3>';
+        html += '<div style="display: flex; gap: 10px;">';
+        html += '<button onclick="showImportModal()" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+        html += '📥 Excel/CSVインポート';
+        html += '</button>';
         html += '<button onclick="showAddDealModal()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
         html += '➕ 新規案件追加';
         html += '</button>';
+        html += '</div>';
         html += '</div>';
         
         html += '<div id="dealsList">';
@@ -708,4 +713,323 @@ window.deleteDeal = async function(dealId, customerName) {
         console.error('❌ 案件削除エラー:', error);
         alert('❌ 案件の削除に失敗しました: ' + error.message);
     }
+}
+
+// ===== Excel/CSV Import Functions =====
+
+// Show import modal
+window.showImportModal = function() {
+    const modalHtml = `
+        <div id="importModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+            <div style="background: white; padding: 30px; border-radius: 12px; max-width: 800px; width: 90%; max-height: 90vh; overflow-y: auto;">
+                <h2 style="margin-top: 0; color: #2d3748;">📥 Excel/CSVインポート</h2>
+                
+                <div id="uploadArea" style="border: 3px dashed #cbd5e0; border-radius: 12px; padding: 40px; text-align: center; margin-bottom: 20px; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.borderColor='#4299e1'; this.style.background='#ebf8ff'" onmouseout="this.style.borderColor='#cbd5e0'; this.style.background='white'">
+                    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display: none;" onchange="handleFileSelect(event)">
+                    <div style="font-size: 48px; margin-bottom: 15px;">📄</div>
+                    <h3 style="color: #2d3748; margin-bottom: 10px;">ファイルをドラッグ&ドロップ</h3>
+                    <p style="color: #718096; margin-bottom: 15px;">または</p>
+                    <button onclick="document.getElementById('fileInput').click()" style="background: #4299e1; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        📂 ファイルを選択
+                    </button>
+                    <p style="color: #a0aec0; font-size: 14px; margin-top: 15px;">対応形式: .xlsx, .xls, .csv</p>
+                </div>
+                
+                <div id="previewArea" style="display: none;">
+                    <h3 style="color: #2d3748; margin-bottom: 15px;">📋 データプレビュー</h3>
+                    <div id="previewTable" style="overflow-x: auto; max-height: 400px; margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 8px;"></div>
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button onclick="closeImportModal()" style="background: #cbd5e0; color: #2d3748; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                            キャンセル
+                        </button>
+                        <button onclick="importData()" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                            📥 インポート実行
+                        </button>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; justify-content: flex-end;" id="closeOnlyButton">
+                    <button onclick="closeImportModal()" style="background: #cbd5e0; color: #2d3748; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                        閉じる
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Setup drag and drop
+    const uploadArea = document.getElementById('uploadArea');
+    
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
+    });
+}
+
+// Close import modal
+window.closeImportModal = function() {
+    const modal = document.getElementById('importModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Store parsed data globally
+let parsedImportData = [];
+
+// Handle file select
+window.handleFileSelect = function(event) {
+    const file = event.target.files[0];
+    if (file) {
+        handleFile(file);
+    }
+}
+
+// Handle file
+function handleFile(file) {
+    console.log('📄 ファイル処理開始:', file.name);
+    
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        try {
+            let data;
+            
+            if (file.name.endsWith('.csv')) {
+                // CSV parsing
+                data = parseCSV(e.target.result);
+            } else {
+                // Excel parsing
+                const workbook = XLSX.read(e.target.result, { type: 'binary' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                data = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+            }
+            
+            console.log('✅ ファイル解析完了:', data.length + '行');
+            parseImportData(data);
+            
+        } catch (error) {
+            console.error('❌ ファイル解析エラー:', error);
+            alert('ファイルの解析に失敗しました: ' + error.message);
+        }
+    };
+    
+    if (file.name.endsWith('.csv')) {
+        reader.readAsText(file);
+    } else {
+        reader.readAsBinaryString(file);
+    }
+}
+
+// Parse CSV
+function parseCSV(text) {
+    const lines = text.split('\n');
+    const result = [];
+    
+    for (let line of lines) {
+        if (line.trim()) {
+            result.push(line.split(',').map(cell => cell.trim()));
+        }
+    }
+    
+    return result;
+}
+
+// Parse import data
+function parseImportData(data) {
+    if (data.length < 2) {
+        alert('データが空です');
+        return;
+    }
+    
+    // Find header row (contains "顧客名" or "企業名")
+    let headerRowIndex = -1;
+    for (let i = 0; i < Math.min(5, data.length); i++) {
+        const row = data[i];
+        const rowStr = row.join('').toLowerCase();
+        if (rowStr.includes('顧客') || rowStr.includes('企業') || rowStr.includes('会社')) {
+            headerRowIndex = i;
+            break;
+        }
+    }
+    
+    if (headerRowIndex === -1) {
+        headerRowIndex = 0;
+    }
+    
+    const headers = data[headerRowIndex];
+    console.log('📋 ヘッダー行:', headers);
+    
+    // Find customer name column
+    let customerNameCol = -1;
+    for (let i = 0; i < headers.length; i++) {
+        const header = String(headers[i] || '').toLowerCase();
+        if (header.includes('顧客') || header.includes('企業') || header.includes('会社')) {
+            customerNameCol = i;
+            break;
+        }
+    }
+    
+    if (customerNameCol === -1) {
+        customerNameCol = 0; // Default to first column
+    }
+    
+    console.log('👤 顧客名カラム:', customerNameCol);
+    
+    // Parse data rows
+    parsedImportData = [];
+    
+    for (let i = headerRowIndex + 1; i < data.length; i++) {
+        const row = data[i];
+        
+        if (!row || row.length === 0) continue;
+        
+        const customerName = String(row[customerNameCol] || '').trim();
+        if (!customerName) continue;
+        
+        // Extract license info from remaining columns
+        const licenses = [];
+        
+        for (let j = 0; j < headers.length; j++) {
+            if (j === customerNameCol) continue;
+            
+            const header = String(headers[j] || '').trim();
+            const value = row[j];
+            
+            if (!header || !value) continue;
+            
+            // Check if this is a license column
+            const licenseTypes = ['無制限', '0ABJ', '050', '従量', '内線'];
+            let licenseType = null;
+            
+            for (let type of licenseTypes) {
+                if (header.includes(type)) {
+                    if (header.includes('0ABJ')) {
+                        licenseType = '無制限(0ABJ)';
+                    } else if (header.includes('050')) {
+                        licenseType = '無制限(050)';
+                    } else if (header.includes('従量')) {
+                        licenseType = '従量制';
+                    } else if (header.includes('内線')) {
+                        licenseType = '内線のみ';
+                    }
+                    break;
+                }
+            }
+            
+            if (licenseType) {
+                const count = parseInt(value);
+                if (!isNaN(count) && count > 0) {
+                    licenses.push({
+                        license_type: licenseType,
+                        license_count: count
+                    });
+                }
+            }
+        }
+        
+        if (licenses.length > 0) {
+            parsedImportData.push({
+                customer_name: customerName,
+                sales_rep: '山田', // Default
+                deal_date: new Date().toISOString().split('T')[0],
+                status: '見込み', // Default
+                licenses: licenses
+            });
+        }
+    }
+    
+    console.log('✅ 解析完了:', parsedImportData.length + '件');
+    
+    if (parsedImportData.length === 0) {
+        alert('インポート可能なデータが見つかりませんでした');
+        return;
+    }
+    
+    showPreview();
+}
+
+// Show preview
+function showPreview() {
+    document.getElementById('uploadArea').style.display = 'none';
+    document.getElementById('closeOnlyButton').style.display = 'none';
+    document.getElementById('previewArea').style.display = 'block';
+    
+    let html = '<table style="width: 100%; border-collapse: collapse;">';
+    html += '<thead><tr style="background: #f7fafc;">';
+    html += '<th style="padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0;">顧客名</th>';
+    html += '<th style="padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0;">ライセンス情報</th>';
+    html += '<th style="padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0;">合計</th>';
+    html += '</tr></thead><tbody>';
+    
+    parsedImportData.forEach(function(item) {
+        const total = item.licenses.reduce(function(sum, l) { return sum + l.license_count; }, 0);
+        const licenseDetails = item.licenses.map(function(l) { return l.license_type + ' × ' + l.license_count; }).join(', ');
+        
+        html += '<tr style="border-bottom: 1px solid #e2e8f0;">';
+        html += '<td style="padding: 12px;">' + item.customer_name + '</td>';
+        html += '<td style="padding: 12px; font-size: 13px; color: #718096;">' + licenseDetails + '</td>';
+        html += '<td style="padding: 12px; font-weight: 600;">' + total + '</td>';
+        html += '</tr>';
+    });
+    
+    html += '</tbody></table>';
+    
+    document.getElementById('previewTable').innerHTML = html;
+}
+
+// Import data
+window.importData = async function() {
+    if (parsedImportData.length === 0) {
+        alert('インポートするデータがありません');
+        return;
+    }
+    
+    const confirmed = confirm(parsedImportData.length + '件の案件をインポートしますか？');
+    if (!confirmed) {
+        return;
+    }
+    
+    console.log('📥 インポート開始:', parsedImportData.length + '件');
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (let i = 0; i < parsedImportData.length; i++) {
+        try {
+            const item = parsedImportData[i];
+            
+            await apiCall(API_BASE + '/deals', {
+                method: 'POST',
+                body: JSON.stringify(item)
+            });
+            
+            successCount++;
+            console.log('✅ インポート成功 (' + (i + 1) + '/' + parsedImportData.length + '): ' + item.customer_name);
+            
+        } catch (error) {
+            errorCount++;
+            console.error('❌ インポート失敗 (' + (i + 1) + '/' + parsedImportData.length + '):', error);
+        }
+    }
+    
+    console.log('📊 インポート完了: 成功=' + successCount + ', 失敗=' + errorCount);
+    
+    alert('✅ インポート完了\n\n成功: ' + successCount + '件\n失敗: ' + errorCount + '件');
+    
+    // Close modal and reload dashboard
+    closeImportModal();
+    loadDashboard();
 }
