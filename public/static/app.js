@@ -248,15 +248,21 @@ async function loadDashboard() {
         html += '</div>';
         html += '</div>';
         
-        // Deals List with Add and Import Buttons
+        // Deals List with Add, Import, Export, Template Buttons
         html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; margin-bottom: 15px;">';
         html += '<h3 style="margin: 0; color: #2d3748;">💼 案件一覧</h3>';
-        html += '<div style="display: flex; gap: 10px;">';
+        html += '<div style="display: flex; gap: 10px; flex-wrap: wrap;">';
+        html += '<button onclick="downloadTemplate()" style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+        html += '📄 テンプレートDL';
+        html += '</button>';
+        html += '<button onclick="exportToCSV()" style="background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+        html += '📤 CSVエクスポート';
+        html += '</button>';
         html += '<button onclick="showImportModal()" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
-        html += '📥 Excel/CSVインポート';
+        html += '📥 インポート';
         html += '</button>';
         html += '<button onclick="showAddDealModal()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
-        html += '➕ 新規案件追加';
+        html += '➕ 新規追加';
         html += '</button>';
         html += '</div>';
         html += '</div>';
@@ -1032,4 +1038,104 @@ window.importData = async function() {
     // Close modal and reload dashboard
     closeImportModal();
     loadDashboard();
+}
+
+// ===== Export & Template Functions =====
+
+// Download template
+window.downloadTemplate = function() {
+    console.log('📄 テンプレートダウンロード開始');
+    
+    // Create template CSV
+    const headers = ['顧客名', '営業担当者', '登録日', 'ステータス', '無制限(0ABJ)', '無制限(050)', '従量制', '内線のみ'];
+    const exampleRow = ['サンプル株式会社', '山田', '2025-04-15', '見込み', '100', '50', '20', '10'];
+    
+    let csv = headers.join(',') + '\n';
+    csv += exampleRow.join(',') + '\n';
+    
+    // Convert to Shift-JIS for Excel compatibility (if needed)
+    downloadCSVFile(csv, 'zoomphone_template.csv');
+    
+    console.log('✅ テンプレートダウンロード完了');
+}
+
+// Export to CSV
+window.exportToCSV = async function() {
+    try {
+        console.log('📤 CSVエクスポート開始');
+        
+        // Fetch all deals
+        const response = await apiCall(API_BASE + '/deals');
+        const deals = response.data;
+        
+        if (deals.length === 0) {
+            alert('エクスポートするデータがありません');
+            return;
+        }
+        
+        // Create CSV headers
+        const headers = ['顧客名', '営業担当者', '登録日', 'ステータス', '無制限(0ABJ)', '無制限(050)', '従量制', '内線のみ', '合計ライセンス数'];
+        let csv = headers.join(',') + '\n';
+        
+        // Add data rows
+        deals.forEach(function(deal) {
+            const licenseMap = {
+                '無制限(0ABJ)': 0,
+                '無制限(050)': 0,
+                '従量制': 0,
+                '内線のみ': 0
+            };
+            
+            let total = 0;
+            deal.licenses.forEach(function(license) {
+                licenseMap[license.license_type] = license.license_count;
+                total += license.license_count;
+            });
+            
+            const row = [
+                deal.customer_name,
+                deal.sales_rep,
+                deal.deal_date,
+                deal.status,
+                licenseMap['無制限(0ABJ)'],
+                licenseMap['無制限(050)'],
+                licenseMap['従量制'],
+                licenseMap['内線のみ'],
+                total
+            ];
+            
+            csv += row.join(',') + '\n';
+        });
+        
+        // Download
+        const timestamp = new Date().toISOString().split('T')[0];
+        downloadCSVFile(csv, 'zoomphone_export_' + timestamp + '.csv');
+        
+        console.log('✅ CSVエクスポート完了:', deals.length + '件');
+        alert('✅ CSVエクスポート完了\n\n' + deals.length + '件のデータをエクスポートしました');
+        
+    } catch (error) {
+        console.error('❌ エクスポートエラー:', error);
+        alert('❌ エクスポートに失敗しました: ' + error.message);
+    }
+}
+
+// Download CSV file
+function downloadCSVFile(csvContent, filename) {
+    // Add BOM for Excel UTF-8 compatibility
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+    
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    URL.revokeObjectURL(url);
 }
