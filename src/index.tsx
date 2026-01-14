@@ -290,6 +290,33 @@ app.put('/api/deals/:id', async (c) => {
 /**
  * DELETE /api/deals/:customerName - Delete deal
  */
+/**
+ * DELETE /api/deals/:id - Delete deal by ID (numeric)
+ */
+app.delete('/api/deals/:id{[0-9]+}', async (c) => {
+  try {
+    const id = parseInt(c.req.param('id'));
+    
+    // Delete licenses first (foreign key constraint)
+    await c.env.DB.prepare('DELETE FROM licenses WHERE deal_id = ?').bind(id).run();
+    
+    // Delete deal
+    const result = await c.env.DB.prepare('DELETE FROM deals WHERE id = ?').bind(id).run();
+    
+    if (result.meta.changes === 0) {
+      return c.json({ success: false, error: '案件が見つかりません' }, 404);
+    }
+    
+    return c.json({ success: true, message: '案件を削除しました' });
+  } catch (error) {
+    console.error('Error deleting deal by ID:', error);
+    return c.json({ success: false, error: '案件の削除に失敗しました' }, 500);
+  }
+});
+
+/**
+ * DELETE /api/deals/:customerName - Delete deal by customer name
+ */
 app.delete('/api/deals/:customerName', async (c) => {
   try {
     const customerName = c.req.param('customerName');
