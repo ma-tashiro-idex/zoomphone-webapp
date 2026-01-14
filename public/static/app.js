@@ -416,25 +416,17 @@ async function loadDashboard() {
             html += '</div>';
         }
         
-        // Progress grid (2x2) - 写真と同じデザイン
-        html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">';
+        // Progress grid (3x2) - 6項目カード
+        html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px;">';
         
-        // 1. 年間目標（左上）
+        // 上段
+        // 1. 年間目標
         html += '<div style="background: rgba(255, 255, 255, 0.2); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">';
         html += '<div style="font-size: 14px; opacity: 0.95; margin-bottom: 10px; font-weight: 600;">年間目標</div>';
         html += '<div style="font-size: 32px; font-weight: bold; line-height: 1;">1,000<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">ライセンス</span></div>';
         html += '</div>';
         
-        // 2. 現在の総ライセンス数（右上）
-        html += '<div style="background: rgba(255, 255, 255, 0.2); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">';
-        html += '<div style="font-size: 14px; opacity: 0.95; margin-bottom: 10px; font-weight: 600;">現在の総ライセンス数</div>';
-        html += '<div style="font-size: 32px; font-weight: bold; line-height: 1;">' + stats.total_licenses + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">ライセンス</span>';
-        // 成約と見込みの内訳を小さく表示
-        html += '<div style="font-size: 12px; opacity: 0.85; margin-top: 6px;">成約: ' + stats.confirmed_licenses + ' / 見込み: ' + stats.prospect_licenses + '</div>';
-        html += '</div>';
-        html += '</div>';
-        
-        // 3. 目標達成まであと（左下）
+        // 2. 目標達成まで
         html += '<div style="background: rgba(255, 255, 255, 0.2); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">';
         html += '<div style="font-size: 14px; opacity: 0.95; margin-bottom: 10px; font-weight: 600;">目標達成まで</div>';
         if (stats.remaining_target > 0) {
@@ -444,10 +436,37 @@ async function loadDashboard() {
         }
         html += '</div>';
         
-        // 4. 達成率（右下）
+        // 3. 達成率
         html += '<div style="background: rgba(255, 255, 255, 0.2); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">';
         html += '<div style="font-size: 14px; opacity: 0.95; margin-bottom: 10px; font-weight: 600;">達成率</div>';
         html += '<div style="font-size: 32px; font-weight: bold; line-height: 1;">' + stats.achievement_rate + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">%</span></div>';
+        html += '</div>';
+        
+        // 下段
+        // 4. 成約案件
+        const confirmedCount = deals.filter(d => d.status === '成約').length;
+        html += '<div style="background: rgba(255, 255, 255, 0.2); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">';
+        html += '<div style="font-size: 14px; opacity: 0.95; margin-bottom: 10px; font-weight: 600;">成約案件</div>';
+        html += '<div style="font-size: 32px; font-weight: bold; line-height: 1;">' + stats.confirmed_licenses + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">ライセンス</span>';
+        html += '<div style="font-size: 12px; opacity: 0.85; margin-top: 6px;">' + confirmedCount + '件</div>';
+        html += '</div>';
+        html += '</div>';
+        
+        // 5. 見込み案件
+        const prospectCount = deals.filter(d => d.status === '見込み').length;
+        html += '<div style="background: rgba(255, 255, 255, 0.2); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">';
+        html += '<div style="font-size: 14px; opacity: 0.95; margin-bottom: 10px; font-weight: 600;">見込み案件</div>';
+        html += '<div style="font-size: 32px; font-weight: bold; line-height: 1;">' + stats.prospect_licenses + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">ライセンス</span>';
+        html += '<div style="font-size: 12px; opacity: 0.85; margin-top: 6px;">' + prospectCount + '件</div>';
+        html += '</div>';
+        html += '</div>';
+        
+        // 6. 成約＋見込み
+        html += '<div style="background: rgba(255, 255, 255, 0.2); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">';
+        html += '<div style="font-size: 14px; opacity: 0.95; margin-bottom: 10px; font-weight: 600;">成約＋見込み</div>';
+        html += '<div style="font-size: 32px; font-weight: bold; line-height: 1;">' + stats.total_licenses + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">ライセンス</span>';
+        html += '<div style="font-size: 12px; opacity: 0.85; margin-top: 6px;">' + deals.length + '件</div>';
+        html += '</div>';
         html += '</div>';
         
         html += '</div>';
@@ -469,26 +488,95 @@ async function loadDashboard() {
         
         html += '</div>';
         
-        // Statistics cards
-        html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px;">';
+        // ライセンス種別内訳カード (横長)
+        html += '<div style="background: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">';
+        html += '<h3 style="margin-top: 0; margin-bottom: 20px; color: #2d3748; display: flex; align-items: center; gap: 10px;">';
+        html += '<span style="font-size: 24px;">📊</span>';
+        html += '<span>ライセンス種別内訳</span>';
+        html += '</h3>';
         
-        html += '<div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 25px; border-radius: 12px; border-left: 5px solid #10b981; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); transition: transform 0.3s;">';
-        html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">';
-        html += '<span style="font-size: 16px; color: #64748b; font-weight: 600;">目標達成まであと</span>';
-        html += '<span style="font-size: 28px;">🎯</span>';
-        html += '</div>';
-        html += '<div style="font-size: 36px; font-weight: bold; color: #1e293b; margin-bottom: 8px;">' + stats.remaining_target + '</div>';
-        html += '<div style="font-size: 14px; color: #94a3b8;">ライセンス</div>';
+        // ライセンス種別ごとの集計
+        const licenseTypes = ['無制限＋0ABJ', '無制限＋050', '従量制＋0ABJ', '従量制＋050', '従量制(Pro)', '内線のみ'];
+        const licenseCounts = {};
+        let totalLicensesForBreakdown = 0;
+        
+        licenseTypes.forEach(type => {
+            licenseCounts[type] = 0;
+        });
+        
+        deals.forEach(deal => {
+            deal.licenses.forEach(license => {
+                if (licenseCounts[license.license_type] !== undefined) {
+                    licenseCounts[license.license_type] += license.license_count;
+                    totalLicensesForBreakdown += license.license_count;
+                }
+            });
+        });
+        
+        // 各ライセンス種別を表示
+        licenseTypes.forEach(type => {
+            const count = licenseCounts[type];
+            const percentage = totalLicensesForBreakdown > 0 ? Math.round((count / totalLicensesForBreakdown) * 100) : 0;
+            const barWidth = percentage;
+            
+            html += '<div style="margin-bottom: 15px;">';
+            html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">';
+            html += '<span style="font-size: 14px; font-weight: 600; color: #4a5568;">' + type + '</span>';
+            html += '<span style="font-size: 14px; color: #718096;">' + count + ' (' + percentage + '%)</span>';
+            html += '</div>';
+            html += '<div style="background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden;">';
+            html += '<div style="background: linear-gradient(90deg, #3b82f6, #8b5cf6); height: 100%; width: ' + barWidth + '%; transition: width 0.5s ease;"></div>';
+            html += '</div>';
+            html += '</div>';
+        });
+        
         html += '</div>';
         
-        html += '<div style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); padding: 25px; border-radius: 12px; border-left: 5px solid #3b82f6; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); transition: transform 0.3s;">';
-        html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">';
-        html += '<span style="font-size: 16px; color: #64748b; font-weight: 600;">案件数</span>';
-        html += '<span style="font-size: 28px;">💼</span>';
-        html += '</div>';
-        html += '<div style="font-size: 36px; font-weight: bold; color: #1e293b; margin-bottom: 8px;">' + deals.length + '</div>';
-        html += '<div style="font-size: 14px; color: #94a3b8;">件</div>';
-        html += '</div>';
+        // 月別推移グラフカード (横長)
+        html += '<div style="background: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">';
+        html += '<h3 style="margin-top: 0; margin-bottom: 20px; color: #2d3748; display: flex; align-items: center; gap: 10px;">';
+        html += '<span style="font-size: 24px;">📈</span>';
+        html += '<span>月別ライセンス獲得推移</span>';
+        html += '</h3>';
+        
+        // 月別データの集計
+        const monthlyData = {};
+        deals.forEach(deal => {
+            const month = deal.deal_date.substring(0, 7); // YYYY-MM
+            if (!monthlyData[month]) {
+                monthlyData[month] = 0;
+            }
+            deal.licenses.forEach(license => {
+                monthlyData[month] += license.license_count;
+            });
+        });
+        
+        // 月でソート
+        const sortedMonths = Object.keys(monthlyData).sort();
+        const maxMonthlyValue = Math.max(...Object.values(monthlyData), 1);
+        
+        // 直近6ヶ月のみ表示
+        const recentMonths = sortedMonths.slice(-6);
+        
+        recentMonths.forEach(month => {
+            const count = monthlyData[month];
+            const barWidth = Math.round((count / maxMonthlyValue) * 100);
+            const monthLabel = month.substring(5) + '月'; // MM月
+            
+            html += '<div style="margin-bottom: 12px;">';
+            html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">';
+            html += '<span style="font-size: 14px; font-weight: 600; color: #4a5568;">' + monthLabel + '</span>';
+            html += '<span style="font-size: 14px; color: #718096;">' + count + ' ライセンス</span>';
+            html += '</div>';
+            html += '<div style="background: #e2e8f0; height: 10px; border-radius: 5px; overflow: hidden;">';
+            html += '<div style="background: linear-gradient(90deg, #10b981, #34d399); height: 100%; width: ' + barWidth + '%; transition: width 0.5s ease;"></div>';
+            html += '</div>';
+            html += '</div>';
+        });
+        
+        if (recentMonths.length === 0) {
+            html += '<div style="text-align: center; color: #94a3b8; padding: 20px;">データがありません</div>';
+        }
         
         html += '</div>';
         
