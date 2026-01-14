@@ -1,6 +1,6 @@
 // TypeScript type definitions for ZoomPhone webapp
 
-export type LicenseType = '無制限(0ABJ)' | '無制限(050)' | '従量制' | '内線のみ';
+export type LicenseType = '無制限＋0ABJ' | '無制限＋050' | '従量制＋0ABJ' | '従量制＋050' | '従量制(Pro)' | '内線のみ';
 export type DealStatus = '見込み' | '成約';
 export type DealSource = 'manual' | 'excel' | 'csv_import';
 

@@ -521,11 +521,11 @@ window.addLicenseRow = function() {
         <div id="${rowId}" style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
             <select class="licenseType" style="flex: 2; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
                 <option value="">種別を選択</option>
-                <option value="無制限(0ABJ)">無制限(0ABJ)</option>
-                <option value="無制限(050)">無制限(050)</option>
-                <option value="従量制(0ABJ)">従量制(0ABJ)</option>
-                <option value="従量制(050)">従量制(050)</option>
-                <option value="従量制">従量制</option>
+                <option value="無制限＋0ABJ">無制限＋0ABJ</option>
+                <option value="無制限＋050">無制限＋050</option>
+                <option value="従量制＋0ABJ">従量制＋0ABJ</option>
+                <option value="従量制＋050">従量制＋050</option>
+                <option value="従量制(Pro)">従量制(Pro)</option>
                 <option value="内線のみ">内線のみ</option>
             </select>
             <input type="number" class="licenseCount" placeholder="数量" min="1" style="flex: 1; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
@@ -970,46 +970,54 @@ function parseZoomPhoneSimulation(data) {
     
     // License type mappings
     const licenseMapping = {
-        '無制限_0ABJ': '無制限(0ABJ)',
-        '無制限_050': '無制限(050)',
-        '従量制_0ABJ': '従量制(0ABJ)',
-        '従量制_050': '従量制(050)',
-        '番号無し': '従量制',
+        '無制限_0ABJ': '無制限＋0ABJ',
+        '無制限_050': '無制限＋050',
+        '従量制_0ABJ': '従量制＋0ABJ',
+        '従量制_050': '従量制＋050',
+        '番号無し': '従量制(Pro)',
         '内線のみ': '内線のみ'
     };
     
-    // Parse rows 4-9
+    // Parse rows 4-9 with plan name inheritance
+    let currentPlan = ''; // Track the current plan name
     for (let i = 4; i <= 9; i++) {
         if (!data[i] || data[i].length < 5) continue;
         
-        const category = String(data[i][1] || '').trim();
+        const planName = String(data[i][1] || '').trim();
         const detail = String(data[i][2] || '').trim();
         const count = parseInt(data[i][4]);
         
         if (isNaN(count) || count <= 0) continue;
         
+        // If planName is not empty, update currentPlan
+        if (planName) {
+            currentPlan = planName;
+        }
+        
         let licenseType = null;
         
+        console.log('Row ' + i + ': currentPlan="' + currentPlan + '", detail="' + detail + '", count=' + count);
+        
         // 無制限
-        if (category.includes('無制限')) {
+        if (currentPlan.includes('無制限')) {
             if (detail.includes('0ABJ')) {
-                licenseType = '無制限(0ABJ)';
+                licenseType = '無制限＋0ABJ';
             } else if (detail.includes('050')) {
-                licenseType = '無制限(050)';
+                licenseType = '無制限＋050';
             }
         }
         // 従量制
-        else if (category.includes('従量')) {
+        else if (currentPlan.includes('従量')) {
             if (detail.includes('0ABJ')) {
-                licenseType = '従量制(0ABJ)';
+                licenseType = '従量制＋0ABJ';
             } else if (detail.includes('050')) {
-                licenseType = '従量制(050)';
+                licenseType = '従量制＋050';
             } else if (detail.includes('番号無し')) {
-                licenseType = '従量制';
+                licenseType = '従量制(Pro)';
             }
         }
         // 内線のみ
-        else if (category.includes('内線')) {
+        else if (currentPlan.includes('内線')) {
             licenseType = '内線のみ';
         }
         
@@ -1106,15 +1114,15 @@ function parseGenericFormat(data) {
             for (let type of licenseTypes) {
                 if (header.includes(type)) {
                     if (header.includes('0ABJ') && header.includes('無制限')) {
-                        licenseType = '無制限(0ABJ)';
+                        licenseType = '無制限＋0ABJ';
                     } else if (header.includes('050') && header.includes('無制限')) {
-                        licenseType = '無制限(050)';
+                        licenseType = '無制限＋050';
                     } else if (header.includes('0ABJ') && header.includes('従量')) {
-                        licenseType = '従量制(0ABJ)';
+                        licenseType = '従量制＋0ABJ';
                     } else if (header.includes('050') && header.includes('従量')) {
-                        licenseType = '従量制(050)';
-                    } else if (header.includes('従量')) {
-                        licenseType = '従量制';
+                        licenseType = '従量制＋050';
+                    } else if (header.includes('従量') || header.includes('Pro')) {
+                        licenseType = '従量制(Pro)';
                     } else if (header.includes('内線')) {
                         licenseType = '内線のみ';
                     }
@@ -1234,7 +1242,7 @@ window.downloadTemplate = function() {
     console.log('📄 テンプレートダウンロード開始');
     
     // Create template CSV with new license types
-    const headers = ['顧客名', '営業担当者', '登録日', 'ステータス', '無制限(0ABJ)', '無制限(050)', '従量制(0ABJ)', '従量制(050)', '従量制', '内線のみ'];
+    const headers = ['顧客名', '営業担当者', '登録日', 'ステータス', '無制限＋0ABJ', '無制限＋050', '従量制＋0ABJ', '従量制＋050', '従量制(Pro)', '内線のみ'];
     const exampleRow = ['サンプル株式会社', '山田', '2025-04-15', '見込み', '100', '50', '30', '20', '10', '5'];
     
     let csv = headers.join(',') + '\n';
@@ -1261,17 +1269,17 @@ window.exportToCSV = async function() {
         }
         
         // Create CSV headers with new license types
-        const headers = ['顧客名', '営業担当者', '登録日', 'ステータス', '無制限(0ABJ)', '無制限(050)', '従量制(0ABJ)', '従量制(050)', '従量制', '内線のみ', '合計ライセンス数'];
+        const headers = ['顧客名', '営業担当者', '登録日', 'ステータス', '無制限＋0ABJ', '無制限＋050', '従量制＋0ABJ', '従量制＋050', '従量制(Pro)', '内線のみ', '合計ライセンス数'];
         let csv = headers.join(',') + '\n';
         
         // Add data rows
         deals.forEach(function(deal) {
             const licenseMap = {
-                '無制限(0ABJ)': 0,
-                '無制限(050)': 0,
-                '従量制(0ABJ)': 0,
-                '従量制(050)': 0,
-                '従量制': 0,
+                '無制限＋0ABJ': 0,
+                '無制限＋050': 0,
+                '従量制＋0ABJ': 0,
+                '従量制＋050': 0,
+                '従量制(Pro)': 0,
                 '内線のみ': 0
             };
             
@@ -1286,11 +1294,11 @@ window.exportToCSV = async function() {
                 deal.sales_rep,
                 deal.deal_date,
                 deal.status,
-                licenseMap['無制限(0ABJ)'],
-                licenseMap['無制限(050)'],
-                licenseMap['従量制(0ABJ)'],
-                licenseMap['従量制(050)'],
-                licenseMap['従量制'],
+                licenseMap['無制限＋0ABJ'],
+                licenseMap['無制限＋050'],
+                licenseMap['従量制＋0ABJ'],
+                licenseMap['従量制＋050'],
+                licenseMap['従量制(Pro)'],
                 licenseMap['内線のみ'],
                 total
             ];
