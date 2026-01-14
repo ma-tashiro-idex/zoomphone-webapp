@@ -1312,6 +1312,103 @@ function syncPreviewEdits() {
     console.log('✅ プレビュー編集を反映しました:', parsedImportData);
 }
 
+// Check for duplicates
+async function checkDuplicates() {
+    const response = await apiCall(API_BASE + '/deals');
+    const existingDeals = response.data || [];
+    
+    const existingNames = new Set(existingDeals.map(function(d) { return d.customer_name; }));
+    
+    const duplicates = [];
+    parsedImportData.forEach(function(item, index) {
+        if (existingNames.has(item.customer_name)) {
+            duplicates.push({
+                index: index,
+                customer_name: item.customer_name,
+                action: 'overwrite' // default action
+            });
+        }
+    });
+    
+    return duplicates;
+}
+
+// Show duplicate warning dialog
+function showDuplicateDialog(duplicates) {
+    return new Promise(function(resolve) {
+        let html = '<div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;">';
+        html += '<div style="background: white; border-radius: 12px; padding: 30px; max-width: 600px; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">';
+        html += '<h2 style="margin: 0 0 20px 0; color: #e53e3e;">⚠️ 重複案件が検出されました</h2>';
+        html += '<p style="margin-bottom: 20px; color: #718096;">以下の案件は既に登録されています。各案件の処理方法を選択してください：</p>';
+        
+        html += '<div style="margin-bottom: 20px;">';
+        html += '<button onclick="selectAllOverwrite()" style="background: #f56565; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-right: 10px; font-size: 14px;">全て上書き</button>';
+        html += '<button onclick="selectAllSkip()" style="background: #718096; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">全てスキップ</button>';
+        html += '</div>';
+        
+        html += '<div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px;">';
+        
+        duplicates.forEach(function(dup, i) {
+            html += '<div style="border: 2px solid #feb2b2; border-radius: 8px; padding: 15px; background: #fff5f5;">';
+            html += '<div style="font-weight: 600; color: #742a2a; margin-bottom: 10px;">📋 ' + dup.customer_name + '</div>';
+            html += '<div style="display: flex; gap: 10px;">';
+            html += '<label style="flex: 1; cursor: pointer;"><input type="radio" name="dup_action_' + i + '" value="overwrite" checked onchange="updateDuplicateAction(' + i + ', \'overwrite\')"> 上書きする</label>';
+            html += '<label style="flex: 1; cursor: pointer;"><input type="radio" name="dup_action_' + i + '" value="skip" onchange="updateDuplicateAction(' + i + ', \'skip\')"> スキップする</label>';
+            html += '</div>';
+            html += '</div>';
+        });
+        
+        html += '</div>';
+        
+        html += '<div style="display: flex; gap: 10px; justify-content: flex-end;">';
+        html += '<button onclick="cancelDuplicateDialog()" style="background: #718096; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px;">キャンセル</button>';
+        html += '<button onclick="confirmDuplicateDialog()" style="background: #48bb78; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px;">確定してインポート</button>';
+        html += '</div>';
+        
+        html += '</div></div>';
+        
+        const dialogDiv = document.createElement('div');
+        dialogDiv.id = 'duplicateDialog';
+        dialogDiv.innerHTML = html;
+        document.body.appendChild(dialogDiv);
+        
+        window.duplicateDialogResolve = resolve;
+        window.currentDuplicates = duplicates;
+    });
+}
+
+window.updateDuplicateAction = function(index, action) {
+    window.currentDuplicates[index].action = action;
+};
+
+window.selectAllOverwrite = function() {
+    window.currentDuplicates.forEach(function(dup, i) {
+        dup.action = 'overwrite';
+        const radio = document.querySelector('input[name="dup_action_' + i + '"][value="overwrite"]');
+        if (radio) radio.checked = true;
+    });
+};
+
+window.selectAllSkip = function() {
+    window.currentDuplicates.forEach(function(dup, i) {
+        dup.action = 'skip';
+        const radio = document.querySelector('input[name="dup_action_' + i + '"][value="skip"]');
+        if (radio) radio.checked = true;
+    });
+};
+
+window.cancelDuplicateDialog = function() {
+    const dialog = document.getElementById('duplicateDialog');
+    if (dialog) dialog.remove();
+    window.duplicateDialogResolve(null);
+};
+
+window.confirmDuplicateDialog = function() {
+    const dialog = document.getElementById('duplicateDialog');
+    if (dialog) dialog.remove();
+    window.duplicateDialogResolve(window.currentDuplicates);
+};
+
 // Import data
 window.importData = async function() {
     if (parsedImportData.length === 0) {
@@ -1322,6 +1419,38 @@ window.importData = async function() {
     // Sync edits before importing
     syncPreviewEdits();
     
+    // Check for duplicates
+    console.log('🔍 重複チェック中...');
+    const duplicates = await checkDuplicates();
+    
+    if (duplicates.length > 0) {
+        console.log('⚠️ 重複案件が見つかりました:', duplicates.length + '件');
+        const result = await showDuplicateDialog(duplicates);
+        
+        if (!result) {
+            console.log('❌ インポートがキャンセルされました');
+            return;
+        }
+        
+        // Apply actions
+        const duplicateMap = {};
+        result.forEach(function(dup) {
+            duplicateMap[dup.customer_name] = dup.action;
+        });
+        
+        // Filter out skipped items
+        parsedImportData = parsedImportData.filter(function(item) {
+            return duplicateMap[item.customer_name] !== 'skip';
+        });
+        
+        console.log('📊 処理予定:', parsedImportData.length + '件（上書き: ' + result.filter(function(d) { return d.action === 'overwrite'; }).length + '件, スキップ: ' + result.filter(function(d) { return d.action === 'skip'; }).length + '件）');
+    }
+    
+    if (parsedImportData.length === 0) {
+        alert('インポートする案件がありません（全てスキップされました）');
+        return;
+    }
+    
     const confirmed = confirm(parsedImportData.length + '件の案件をインポートしますか？');
     if (!confirmed) {
         return;
@@ -1331,18 +1460,53 @@ window.importData = async function() {
     
     let successCount = 0;
     let errorCount = 0;
+    let overwriteCount = 0;
     
     for (let i = 0; i < parsedImportData.length; i++) {
         try {
             const item = parsedImportData[i];
             
-            await apiCall(API_BASE + '/deals', {
-                method: 'POST',
-                body: JSON.stringify(item)
+            // Check if this is an overwrite case
+            const isOverwrite = duplicates.some(function(d) { 
+                return d.customer_name === item.customer_name && d.action === 'overwrite'; 
             });
             
-            successCount++;
-            console.log('✅ インポート成功 (' + (i + 1) + '/' + parsedImportData.length + '): ' + item.customer_name);
+            if (isOverwrite) {
+                // Get existing deal by customer name
+                console.log('🔄 上書き中:', item.customer_name);
+                const existingResponse = await apiCall(API_BASE + '/deals/' + encodeURIComponent(item.customer_name));
+                
+                if (existingResponse.success && existingResponse.data) {
+                    const existingDeal = existingResponse.data;
+                    
+                    // Update existing deal
+                    await apiCall(API_BASE + '/deals/' + existingDeal.id, {
+                        method: 'PUT',
+                        body: JSON.stringify({
+                            customer_name: item.customer_name,
+                            sales_rep: item.sales_rep,
+                            deal_date: item.deal_date,
+                            status: item.status,
+                            licenses: item.licenses
+                        })
+                    });
+                    
+                    overwriteCount++;
+                    successCount++;
+                    console.log('✅ 上書き成功 (' + (i + 1) + '/' + parsedImportData.length + '): ' + item.customer_name);
+                } else {
+                    throw new Error('既存案件の取得に失敗しました');
+                }
+            } else {
+                // Create new deal
+                await apiCall(API_BASE + '/deals', {
+                    method: 'POST',
+                    body: JSON.stringify(item)
+                });
+                
+                successCount++;
+                console.log('✅ 新規作成成功 (' + (i + 1) + '/' + parsedImportData.length + '): ' + item.customer_name);
+            }
             
         } catch (error) {
             errorCount++;
@@ -1350,9 +1514,16 @@ window.importData = async function() {
         }
     }
     
-    console.log('📊 インポート完了: 成功=' + successCount + ', 失敗=' + errorCount);
+    let resultMessage = 'インポート完了\n成功: ' + successCount + '件';
+    if (overwriteCount > 0) {
+        resultMessage += '（うち上書き: ' + overwriteCount + '件）';
+    }
+    if (errorCount > 0) {
+        resultMessage += '\n失敗: ' + errorCount + '件';
+    }
     
-    alert('✅ インポート完了\n\n成功: ' + successCount + '件\n失敗: ' + errorCount + '件');
+    alert(resultMessage);
+    console.log('📊 インポート完了: 成功=' + successCount + ', 上書き=' + overwriteCount + ', 失敗=' + errorCount);
     
     // Close modal and reload dashboard
     closeImportModal();
