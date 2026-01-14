@@ -106,11 +106,9 @@ auth.onAuthStateChanged(user => {
                 const userInfo = document.createElement('span');
                 userInfo.id = 'userInfo';
                 userInfo.className = 'user-info';
-                userInfo.innerHTML = `
-                    <div class="user-avatar">${user.email.charAt(0).toUpperCase()}</div>
-                    <span>${user.email}</span>
-                    <button class="logout-btn" onclick="logout()">ログアウト</button>
-                `;
+                userInfo.innerHTML = '<div class="user-avatar">' + user.email.charAt(0).toUpperCase() + '</div>' +
+                    '<span>' + user.email + '</span>' +
+                    '<button class="logout-btn" onclick="logout()">ログアウト</button>';
                 header.appendChild(userInfo);
             }
             
@@ -134,7 +132,7 @@ auth.onAuthStateChanged(user => {
 // Verify access permission
 async function verifyAccess(email) {
     try {
-        const response = await fetch(`${API_BASE}/deals?email=${encodeURIComponent(email)}`);
+        const response = await fetch(API_BASE + '/deals?email=' + encodeURIComponent(email));
         return response.ok;
     } catch (error) {
         console.error('Access verification failed:', error);
@@ -175,124 +173,122 @@ async function loadDashboard() {
     
     try {
         // Fetch stats
-        const statsResponse = await apiCall(`${API_BASE}/stats`);
+        const statsResponse = await apiCall(API_BASE + '/stats');
         const stats = statsResponse.data;
         
         // Fetch deals
-        const dealsResponse = await apiCall(`${API_BASE}/deals`);
+        const dealsResponse = await apiCall(API_BASE + '/deals');
         const deals = dealsResponse.data;
         
-        // Render dashboard
-        appContainer.innerHTML = `
-            <div class="card">
-                <h2>📊 ダッシュボード - 2025年度</h2>
-                
-                <!-- Statistics -->
-                <div class="stats-grid">
-                    <div class="stat-card" style="background: linear-gradient(135deg, #63b3ed 0%, #4299e1 100%);">
-                        <div class="stat-label">🎯 年間目標（KPI）</div>
-                        <div class="stat-value">1,000</div>
-                        <div class="stat-unit">ライセンス</div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-label">成約ライセンス数</div>
-                        <div class="stat-value">${stats.confirmed_licenses}</div>
-                        <div class="stat-unit">ライセンス</div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-label">見込みライセンス数</div>
-                        <div class="stat-value">${stats.prospect_licenses}</div>
-                        <div class="stat-unit">ライセンス</div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-label">達成率</div>
-                        <div class="stat-value">${stats.achievement_rate}%</div>
-                        <div class="stat-unit">（見込み＋成約）</div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-label">目標達成まであと</div>
-                        <div class="stat-value">${stats.remaining_target}</div>
-                        <div class="stat-unit">ライセンス</div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-label">案件数</div>
-                        <div class="stat-value">${deals.length}</div>
-                        <div class="stat-unit">件</div>
-                    </div>
-                </div>
-                
-                <!-- Progress Bar -->
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: ${Math.min(stats.achievement_rate, 100)}%">
-                        ${stats.achievement_rate}%
-                    </div>
-                </div>
-                
-                <!-- Deals List -->
-                <h3 style="margin-top: 30px; margin-bottom: 15px; color: #2d3748;">💼 案件一覧</h3>
-                <div id="dealsList">
-                    ${deals.length === 0 ? 
-                        '<p class="loading">まだ案件が登録されていません</p>' :
-                        deals.map(deal => renderDealItem(deal)).join('')
-                    }
-                </div>
-            </div>
-        `;
+        // Render dashboard HTML
+        let html = '<div class="card">';
+        html += '<h2>📊 ダッシュボード - 2025年度</h2>';
+        
+        // Statistics
+        html += '<div class="stats-grid">';
+        html += '<div class="stat-card" style="background: linear-gradient(135deg, #63b3ed 0%, #4299e1 100%);">';
+        html += '<div class="stat-label">🎯 年間目標（KPI）</div>';
+        html += '<div class="stat-value">1,000</div>';
+        html += '<div class="stat-unit">ライセンス</div>';
+        html += '</div>';
+        
+        html += '<div class="stat-card">';
+        html += '<div class="stat-label">成約ライセンス数</div>';
+        html += '<div class="stat-value">' + stats.confirmed_licenses + '</div>';
+        html += '<div class="stat-unit">ライセンス</div>';
+        html += '</div>';
+        
+        html += '<div class="stat-card">';
+        html += '<div class="stat-label">見込みライセンス数</div>';
+        html += '<div class="stat-value">' + stats.prospect_licenses + '</div>';
+        html += '<div class="stat-unit">ライセンス</div>';
+        html += '</div>';
+        
+        html += '<div class="stat-card">';
+        html += '<div class="stat-label">達成率</div>';
+        html += '<div class="stat-value">' + stats.achievement_rate + '%</div>';
+        html += '<div class="stat-unit">（見込み＋成約）</div>';
+        html += '</div>';
+        
+        html += '<div class="stat-card">';
+        html += '<div class="stat-label">目標達成まであと</div>';
+        html += '<div class="stat-value">' + stats.remaining_target + '</div>';
+        html += '<div class="stat-unit">ライセンス</div>';
+        html += '</div>';
+        
+        html += '<div class="stat-card">';
+        html += '<div class="stat-label">案件数</div>';
+        html += '<div class="stat-value">' + deals.length + '</div>';
+        html += '<div class="stat-unit">件</div>';
+        html += '</div>';
+        html += '</div>';
+        
+        // Progress Bar
+        const progressWidth = Math.min(stats.achievement_rate, 100);
+        html += '<div class="progress-bar">';
+        html += '<div class="progress-fill" style="width: ' + progressWidth + '%">';
+        html += stats.achievement_rate + '%';
+        html += '</div>';
+        html += '</div>';
+        
+        // Deals List
+        html += '<h3 style="margin-top: 30px; margin-bottom: 15px; color: #2d3748;">💼 案件一覧</h3>';
+        html += '<div id="dealsList">';
+        
+        if (deals.length === 0) {
+            html += '<p class="loading">まだ案件が登録されていません</p>';
+        } else {
+            deals.forEach(function(deal) {
+                html += renderDealItem(deal);
+            });
+        }
+        
+        html += '</div>';
+        html += '</div>';
+        
+        appContainer.innerHTML = html;
         
     } catch (error) {
         console.error('Dashboard load error:', error);
-        appContainer.innerHTML = `
-            <div class="card">
-                <div class="error">
-                    ❌ データの読み込みに失敗しました: ${error.message}
-                </div>
-            </div>
-        `;
+        appContainer.innerHTML = '<div class="card"><div class="error">❌ データの読み込みに失敗しました: ' + error.message + '</div></div>';
     }
 }
 
 // Render deal item
 function renderDealItem(deal) {
-    const totalLicenses = deal.licenses.reduce((sum, l) => sum + l.license_count, 0);
-    const licenseDetails = deal.licenses.map(l => `${l.license_type} × ${l.license_count}`).join(', ');
+    const totalLicenses = deal.licenses.reduce(function(sum, l) { return sum + l.license_count; }, 0);
+    const licenseDetails = deal.licenses.map(function(l) { return l.license_type + ' × ' + l.license_count; }).join(', ');
     const date = new Date(deal.deal_date).toLocaleDateString('ja-JP');
-    const statusClass = deal.status === '成約' ? 'confirmed' : 'prospect';
-    const statusText = deal.status;
+    const statusColor = deal.status === '成約' ? '#48bb78' : '#4299e1';
+    const statusBg = deal.status === '成約' ? '#c6f6d5' : '#bee3f8';
+    const statusTextColor = deal.status === '成約' ? '#22543d' : '#2c5282';
     
-    return `
-        <div class="card" style="margin-bottom: 15px; border-left: 4px solid ${deal.status === '成約' ? '#48bb78' : '#4299e1'};">
-            <div style="display: flex; justify-content: space-between; align-items: start;">
-                <div style="flex: 1;">
-                    <div style="font-weight: 600; color: #2d3748; margin-bottom: 8px; font-size: 18px;">
-                        ${deal.customer_name} 
-                        <span style="display: inline-block; background: ${deal.status === '成約' ? '#c6f6d5' : '#bee3f8'}; 
-                                     color: ${deal.status === '成約' ? '#22543d' : '#2c5282'}; 
-                                     padding: 4px 12px; border-radius: 12px; font-size: 12px; margin-left: 8px;">
-                            ${statusText}
-                        </span>
-                        <span style="display: inline-block; background: #e9d8fd; color: #553c9a; 
-                                     padding: 4px 12px; border-radius: 12px; font-size: 12px; margin-left: 8px;">
-                            ${deal.sales_rep}
-                        </span>
-                    </div>
-                    <div style="color: #718096; font-size: 14px; margin-bottom: 4px;">
-                        📦 合計: <strong>${totalLicenses}ライセンス</strong>
-                    </div>
-                    <div style="color: #a0aec0; font-size: 13px; margin-bottom: 4px;">
-                        ${licenseDetails}
-                    </div>
-                    <div style="color: #a0aec0; font-size: 12px;">
-                        📅 登録日: ${date}
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
+    let html = '<div class="card" style="margin-bottom: 15px; border-left: 4px solid ' + statusColor + ';">';
+    html += '<div style="display: flex; justify-content: space-between; align-items: start;">';
+    html += '<div style="flex: 1;">';
+    html += '<div style="font-weight: 600; color: #2d3748; margin-bottom: 8px; font-size: 18px;">';
+    html += deal.customer_name + ' ';
+    html += '<span style="display: inline-block; background: ' + statusBg + '; color: ' + statusTextColor + '; padding: 4px 12px; border-radius: 12px; font-size: 12px; margin-left: 8px;">';
+    html += deal.status;
+    html += '</span>';
+    html += '<span style="display: inline-block; background: #e9d8fd; color: #553c9a; padding: 4px 12px; border-radius: 12px; font-size: 12px; margin-left: 8px;">';
+    html += deal.sales_rep;
+    html += '</span>';
+    html += '</div>';
+    html += '<div style="color: #718096; font-size: 14px; margin-bottom: 4px;">';
+    html += '📦 合計: <strong>' + totalLicenses + 'ライセンス</strong>';
+    html += '</div>';
+    html += '<div style="color: #a0aec0; font-size: 13px; margin-bottom: 4px;">';
+    html += licenseDetails;
+    html += '</div>';
+    html += '<div style="color: #a0aec0; font-size: 12px;">';
+    html += '📅 登録日: ' + date;
+    html += '</div>';
+    html += '</div>';
+    html += '</div>';
+    html += '</div>';
+    
+    return html;
 }
 
 // Initialize on page load
@@ -304,7 +300,7 @@ if (window.location.search.includes('test=true')) {
     console.log('⚠️ 認証をバイパスしています（開発用）');
     
     // テスト用のメールアドレスを設定
-    currentUserEmail = 'hi-abe@idex.co.jp'; // 許可リストの最初のユーザー
+    currentUserEmail = 'hi-abe@idex.co.jp';
     
     document.getElementById('authContainer').style.display = 'none';
     document.getElementById('mainContent').style.display = 'block';
@@ -314,13 +310,14 @@ if (window.location.search.includes('test=true')) {
         const userInfo = document.createElement('span');
         userInfo.id = 'userInfo';
         userInfo.className = 'user-info';
-        userInfo.innerHTML = `
-            <div class="user-avatar">T</div>
-            <span>テストモード (${currentUserEmail})</span>
-            <button class="logout-btn" onclick="location.href=location.pathname">終了</button>
-        `;
+        userInfo.innerHTML = '<div class="user-avatar">T</div>' +
+            '<span>テストモード (' + currentUserEmail + ')</span>' +
+            '<button class="logout-btn" onclick="location.href=location.pathname">終了</button>';
         header.appendChild(userInfo);
     }
     
     loadDashboard();
 }
+
+console.log('✅ loginWithGoogle関数が利用可能:', typeof window.loginWithGoogle === 'function');
+console.log('✅ logout関数が利用可能:', typeof window.logout === 'function');
