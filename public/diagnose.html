@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>診断ページ - ZoomPhone v2.0</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #48bb78;
+            border-bottom: 2px solid #48bb78;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #4299e1;
+            margin-top: 30px;
+        }
+        .test-section {
+            background: #2d3748;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.ok {
+            background: #48bb78;
+            color: white;
+        }
+        .status.error {
+            background: #fc8181;
+            color: white;
+        }
+        .status.pending {
+            background: #fbbf24;
+            color: #1a202c;
+        }
+        pre {
+            background: #1a202c;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border-left: 4px solid #4299e1;
+        }
+        button {
+            background: #4299e1;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #3182ce;
+        }
+        .link {
+            color: #4299e1;
+            text-decoration: none;
+        }
+        .link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 ZoomPhone v2.0 システム診断</h1>
+        
+        <div class="test-section">
+            <h2>📍 環境情報</h2>
+            <p><strong>現在のURL:</strong> <span id="currentUrl"></span></p>
+            <p><strong>ホスト名:</strong> <span id="hostname"></span></p>
+            <p><strong>プロトコル:</strong> <span id="protocol"></span></p>
+            <p><strong>ユーザーエージェント:</strong> <span id="userAgent"></span></p>
+        </div>
+
+        <div class="test-section">
+            <h2>🌐 API接続テスト</h2>
+            <div id="apiTest">
+                <span class="status pending">テスト中...</span>
+                <button onclick="testAPI()">再テスト</button>
+            </div>
+            <pre id="apiResult">テスト実行中...</pre>
+        </div>
+
+        <div class="test-section">
+            <h2>📦 静的ファイルテスト</h2>
+            <div id="staticTest">
+                <span class="status pending">テスト中...</span>
+                <button onclick="testStatic()">再テスト</button>
+            </div>
+            <pre id="staticResult">テスト実行中...</pre>
+        </div>
+
+        <div class="test-section">
+            <h2>🔥 Firebase接続テスト</h2>
+            <div id="firebaseTest">
+                <span class="status pending">テスト中...</span>
+                <button onclick="testFirebase()">再テスト</button>
+            </div>
+            <pre id="firebaseResult">テスト実行中...</pre>
+        </div>
+
+        <div class="test-section">
+            <h2>🚀 アクセス方法</h2>
+            <p><strong>通常モード:</strong> <a class="link" href="/" target="_blank">メインページ</a></p>
+            <p><strong>テストモード:</strong> <a class="link" href="/?test=true" target="_blank">認証バイパス</a></p>
+            <button onclick="window.location.href='/?test=true'">テストモードで起動</button>
+        </div>
+
+        <div class="test-section">
+            <h2>📋 診断ログ</h2>
+            <pre id="diagnosticLog">初期化中...</pre>
+        </div>
+    </div>
+
+    <script>
+        let logs = [];
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+            logs.push(`[${timestamp}] ${icon} ${message}`);
+            document.getElementById('diagnosticLog').textContent = logs.join('\n');
+        }
+
+        // 環境情報表示
+        document.getElementById('currentUrl').textContent = window.location.href;
+        document.getElementById('hostname').textContent = window.location.hostname;
+        document.getElementById('protocol').textContent = window.location.protocol;
+        document.getElementById('userAgent').textContent = navigator.userAgent;
+        
+        log('環境情報読み込み完了');
+
+        // API接続テスト
+        async function testAPI() {
+            const container = document.getElementById('apiTest');
+            const result = document.getElementById('apiResult');
+            
+            container.innerHTML = '<span class="status pending">テスト中...</span>';
+            result.textContent = 'APIに接続中...';
+            log('APIテスト開始');
+            
+            try {
+                const response = await fetch('/api/stats?email=hi-abe@idex.co.jp');
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    container.innerHTML = '<span class="status ok">成功</span>';
+                    result.textContent = JSON.stringify(data, null, 2);
+                    log('APIテスト成功', 'success');
+                } else {
+                    container.innerHTML = '<span class="status error">失敗</span>';
+                    result.textContent = JSON.stringify(data, null, 2);
+                    log('APIテスト失敗: ' + JSON.stringify(data), 'error');
+                }
+            } catch (error) {
+                container.innerHTML = '<span class="status error">エラー</span>';
+                result.textContent = 'エラー: ' + error.message;
+                log('APIテストエラー: ' + error.message, 'error');
+            }
+        }
+
+        // 静的ファイルテスト
+        async function testStatic() {
+            const container = document.getElementById('staticTest');
+            const result = document.getElementById('staticResult');
+            
+            container.innerHTML = '<span class="status pending">テスト中...</span>';
+            result.textContent = '静的ファイルをチェック中...';
+            log('静的ファイルテスト開始');
+            
+            try {
+                const files = [
+                    '/static/app.js',
+                    '/static/styles.css'
+                ];
+                
+                const results = await Promise.all(
+                    files.map(async (file) => {
+                        const res = await fetch(file);
+                        return {
+                            file,
+                            status: res.status,
+                            ok: res.ok,
+                            type: res.headers.get('content-type')
+                        };
+                    })
+                );
+                
+                const allOk = results.every(r => r.ok);
+                container.innerHTML = allOk ? 
+                    '<span class="status ok">成功</span>' : 
+                    '<span class="status error">一部失敗</span>';
+                result.textContent = results.map(r => 
+                    `${r.ok ? '✅' : '❌'} ${r.file} (${r.status}) - ${r.type}`
+                ).join('\n');
+                log('静的ファイルテスト完了', allOk ? 'success' : 'error');
+            } catch (error) {
+                container.innerHTML = '<span class="status error">エラー</span>';
+                result.textContent = 'エラー: ' + error.message;
+                log('静的ファイルテストエラー: ' + error.message, 'error');
+            }
+        }
+
+        // Firebaseテスト
+        function testFirebase() {
+            const container = document.getElementById('firebaseTest');
+            const result = document.getElementById('firebaseResult');
+            
+            container.innerHTML = '<span class="status pending">テスト中...</span>';
+            result.textContent = 'Firebase SDK読み込み確認中...';
+            log('Firebaseテスト開始');
+            
+            setTimeout(() => {
+                try {
+                    if (typeof firebase !== 'undefined') {
+                        container.innerHTML = '<span class="status ok">SDK読み込み成功</span>';
+                        result.textContent = 'Firebase SDK バージョン: ' + firebase.SDK_VERSION + '\n';
+                        result.textContent += 'Auth利用可能: ' + (typeof firebase.auth !== 'undefined' ? 'はい' : 'いいえ');
+                        log('Firebase SDK確認完了', 'success');
+                    } else {
+                        container.innerHTML = '<span class="status error">SDK未読み込み</span>';
+                        result.textContent = 'Firebase SDKが読み込まれていません。\nCDNからの読み込みに失敗している可能性があります。';
+                        log('Firebase SDK未検出', 'error');
+                    }
+                } catch (error) {
+                    container.innerHTML = '<span class="status error">エラー</span>';
+                    result.textContent = 'エラー: ' + error.message;
+                    log('Firebaseテストエラー: ' + error.message, 'error');
+                }
+            }, 2000);
+        }
+
+        // 自動テスト実行
+        log('自動テスト開始');
+        testAPI();
+        testStatic();
+        testFirebase();
+    </script>
+</body>
+</html>

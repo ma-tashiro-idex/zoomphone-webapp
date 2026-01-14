@@ -20,6 +20,9 @@ app.use('/api/*', cors());
 // Serve static files from public directory
 app.use('/static/*', serveStatic({ root: './public' }));
 
+// Serve diagnostic page
+app.get('/diagnose', serveStatic({ path: './public/diagnose.html' }));
+
 // Simple authentication middleware (checks email in query/header)
 // In production, use Firebase Admin SDK for proper token verification
 app.use('/api/*', async (c, next) => {
