@@ -523,6 +523,8 @@ window.addLicenseRow = function() {
                 <option value="">種別を選択</option>
                 <option value="無制限(0ABJ)">無制限(0ABJ)</option>
                 <option value="無制限(050)">無制限(050)</option>
+                <option value="従量制(0ABJ)">従量制(0ABJ)</option>
+                <option value="従量制(050)">従量制(050)</option>
                 <option value="従量制">従量制</option>
                 <option value="内線のみ">内線のみ</option>
             </select>
@@ -921,6 +923,126 @@ function parseImportData(data) {
         return;
     }
     
+    console.log('📊 データ解析開始:', data.length + '行');
+    
+    // このExcelファイルの特殊な構造に対応
+    // Row 0-1: ヘッダー情報
+    // Row 2-9: ライセンス情報（列1: カテゴリ, 列2: 詳細, 列3: 月額料金, 列4: 契約数）
+    
+    // Try to detect if this is the ZoomPhone price simulation format
+    let isZoomPhoneFormat = false;
+    if (data.length > 5 && data[0] && data[0].length > 1) {
+        const firstCellText = String(data[0][1] || '').toLowerCase();
+        if (firstCellText.includes('zoom') || firstCellText.includes('価格') || firstCellText.includes('シミュレーション')) {
+            isZoomPhoneFormat = true;
+            console.log('✅ ZoomPhone価格シミュレーション形式を検出');
+        }
+    }
+    
+    if (isZoomPhoneFormat) {
+        parseZoomPhoneSimulation(data);
+    } else {
+        // 従来の汎用CSVフォーマット
+        parseGenericFormat(data);
+    }
+}
+
+// Parse ZoomPhone price simulation Excel format
+function parseZoomPhoneSimulation(data) {
+    console.log('📊 ZoomPhone価格シミュレーション形式の解析');
+    
+    // Extract customer name from first row (例: "株式会社〇〇〇〇御中　Zoom Phone　価格シミュレーション")
+    let customerName = '不明な顧客';
+    if (data[0] && data[0][1]) {
+        const text = String(data[0][1]);
+        const match = text.match(/(.+?)御中/);
+        if (match) {
+            customerName = match[1].trim();
+        } else if (text.includes('株式会社') || text.includes('会社')) {
+            customerName = text.split('　')[0].trim();
+        }
+    }
+    
+    console.log('👤 顧客名:', customerName);
+    
+    // Extract licenses from rows 4-9 (無制限0ABJ, 無制限050, 従量制0ABJ, 従量制050, 番号無し, 内線のみ)
+    const licenses = [];
+    
+    // License type mappings
+    const licenseMapping = {
+        '無制限_0ABJ': '無制限(0ABJ)',
+        '無制限_050': '無制限(050)',
+        '従量制_0ABJ': '従量制(0ABJ)',
+        '従量制_050': '従量制(050)',
+        '番号無し': '従量制',
+        '内線のみ': '内線のみ'
+    };
+    
+    // Parse rows 4-9
+    for (let i = 4; i <= 9; i++) {
+        if (!data[i] || data[i].length < 5) continue;
+        
+        const category = String(data[i][1] || '').trim();
+        const detail = String(data[i][2] || '').trim();
+        const count = parseInt(data[i][4]);
+        
+        if (isNaN(count) || count <= 0) continue;
+        
+        let licenseType = null;
+        
+        // 無制限
+        if (category.includes('無制限')) {
+            if (detail.includes('0ABJ')) {
+                licenseType = '無制限(0ABJ)';
+            } else if (detail.includes('050')) {
+                licenseType = '無制限(050)';
+            }
+        }
+        // 従量制
+        else if (category.includes('従量')) {
+            if (detail.includes('0ABJ')) {
+                licenseType = '従量制(0ABJ)';
+            } else if (detail.includes('050')) {
+                licenseType = '従量制(050)';
+            } else if (detail.includes('番号無し')) {
+                licenseType = '従量制';
+            }
+        }
+        // 内線のみ
+        else if (category.includes('内線')) {
+            licenseType = '内線のみ';
+        }
+        
+        if (licenseType) {
+            licenses.push({
+                license_type: licenseType,
+                license_count: count
+            });
+            console.log('  ✅', licenseType, '×', count);
+        }
+    }
+    
+    if (licenses.length === 0) {
+        alert('ライセンス情報が見つかりませんでした');
+        return;
+    }
+    
+    parsedImportData = [{
+        customer_name: customerName,
+        sales_rep: '山田', // Default
+        deal_date: new Date().toISOString().split('T')[0],
+        status: '見込み', // Default
+        licenses: licenses
+    }];
+    
+    console.log('✅ 解析完了:', parsedImportData.length + '件');
+    showPreview();
+}
+
+// Parse generic CSV/Excel format
+function parseGenericFormat(data) {
+    console.log('📊 汎用CSVフォーマットの解析');
+    
     // Find header row (contains "顧客名" or "企業名")
     let headerRowIndex = -1;
     for (let i = 0; i < Math.min(5, data.length); i++) {
@@ -983,10 +1105,14 @@ function parseImportData(data) {
             
             for (let type of licenseTypes) {
                 if (header.includes(type)) {
-                    if (header.includes('0ABJ')) {
+                    if (header.includes('0ABJ') && header.includes('無制限')) {
                         licenseType = '無制限(0ABJ)';
-                    } else if (header.includes('050')) {
+                    } else if (header.includes('050') && header.includes('無制限')) {
                         licenseType = '無制限(050)';
+                    } else if (header.includes('0ABJ') && header.includes('従量')) {
+                        licenseType = '従量制(0ABJ)';
+                    } else if (header.includes('050') && header.includes('従量')) {
+                        licenseType = '従量制(050)';
                     } else if (header.includes('従量')) {
                         licenseType = '従量制';
                     } else if (header.includes('内線')) {
@@ -1107,9 +1233,9 @@ window.importData = async function() {
 window.downloadTemplate = function() {
     console.log('📄 テンプレートダウンロード開始');
     
-    // Create template CSV
-    const headers = ['顧客名', '営業担当者', '登録日', 'ステータス', '無制限(0ABJ)', '無制限(050)', '従量制', '内線のみ'];
-    const exampleRow = ['サンプル株式会社', '山田', '2025-04-15', '見込み', '100', '50', '20', '10'];
+    // Create template CSV with new license types
+    const headers = ['顧客名', '営業担当者', '登録日', 'ステータス', '無制限(0ABJ)', '無制限(050)', '従量制(0ABJ)', '従量制(050)', '従量制', '内線のみ'];
+    const exampleRow = ['サンプル株式会社', '山田', '2025-04-15', '見込み', '100', '50', '30', '20', '10', '5'];
     
     let csv = headers.join(',') + '\n';
     csv += exampleRow.join(',') + '\n';
@@ -1134,8 +1260,8 @@ window.exportToCSV = async function() {
             return;
         }
         
-        // Create CSV headers
-        const headers = ['顧客名', '営業担当者', '登録日', 'ステータス', '無制限(0ABJ)', '無制限(050)', '従量制', '内線のみ', '合計ライセンス数'];
+        // Create CSV headers with new license types
+        const headers = ['顧客名', '営業担当者', '登録日', 'ステータス', '無制限(0ABJ)', '無制限(050)', '従量制(0ABJ)', '従量制(050)', '従量制', '内線のみ', '合計ライセンス数'];
         let csv = headers.join(',') + '\n';
         
         // Add data rows
@@ -1143,6 +1269,8 @@ window.exportToCSV = async function() {
             const licenseMap = {
                 '無制限(0ABJ)': 0,
                 '無制限(050)': 0,
+                '従量制(0ABJ)': 0,
+                '従量制(050)': 0,
                 '従量制': 0,
                 '内線のみ': 0
             };
@@ -1160,6 +1288,8 @@ window.exportToCSV = async function() {
                 deal.status,
                 licenseMap['無制限(0ABJ)'],
                 licenseMap['無制限(050)'],
+                licenseMap['従量制(0ABJ)'],
+                licenseMap['従量制(050)'],
                 licenseMap['従量制'],
                 licenseMap['内線のみ'],
                 total
