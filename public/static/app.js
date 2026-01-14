@@ -1168,27 +1168,148 @@ function showPreview() {
     document.getElementById('closeOnlyButton').style.display = 'none';
     document.getElementById('previewArea').style.display = 'block';
     
-    let html = '<table style="width: 100%; border-collapse: collapse;">';
-    html += '<thead><tr style="background: #f7fafc;">';
-    html += '<th style="padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0;">顧客名</th>';
-    html += '<th style="padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0;">ライセンス情報</th>';
-    html += '<th style="padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0;">合計</th>';
-    html += '</tr></thead><tbody>';
+    let html = '<div style="display: flex; flex-direction: column; gap: 20px;">';
     
-    parsedImportData.forEach(function(item) {
+    parsedImportData.forEach(function(item, index) {
         const total = item.licenses.reduce(function(sum, l) { return sum + l.license_count; }, 0);
-        const licenseDetails = item.licenses.map(function(l) { return l.license_type + ' × ' + l.license_count; }).join(', ');
         
-        html += '<tr style="border-bottom: 1px solid #e2e8f0;">';
-        html += '<td style="padding: 12px;">' + item.customer_name + '</td>';
-        html += '<td style="padding: 12px; font-size: 13px; color: #718096;">' + licenseDetails + '</td>';
-        html += '<td style="padding: 12px; font-weight: 600;">' + total + '</td>';
-        html += '</tr>';
+        html += '<div style="border: 2px solid #e2e8f0; border-radius: 8px; padding: 20px; background: #f7fafc;">';
+        html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">';
+        html += '<h3 style="margin: 0; color: #2d3748;">案件 #' + (index + 1) + '</h3>';
+        html += '<button onclick="removePreviewItem(' + index + ')" style="background: #f56565; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">🗑️ 削除</button>';
+        html += '</div>';
+        
+        // 基本情報（編集可能）
+        html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">';
+        
+        // 顧客名
+        html += '<div>';
+        html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; color: #4a5568;">顧客名</label>';
+        html += '<input type="text" id="preview_customer_' + index + '" value="' + item.customer_name + '" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">';
+        html += '</div>';
+        
+        // 営業担当者
+        html += '<div>';
+        html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; color: #4a5568;">営業担当者</label>';
+        html += '<select id="preview_sales_rep_' + index + '" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">';
+        html += '<option value="山田"' + (item.sales_rep === '山田' ? ' selected' : '') + '>山田</option>';
+        html += '<option value="阿部"' + (item.sales_rep === '阿部' ? ' selected' : '') + '>阿部</option>';
+        html += '</select>';
+        html += '</div>';
+        
+        // 登録日
+        html += '<div>';
+        html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; color: #4a5568;">登録日</label>';
+        html += '<input type="date" id="preview_date_' + index + '" value="' + item.deal_date + '" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">';
+        html += '</div>';
+        
+        // ステータス
+        html += '<div>';
+        html += '<label style="display: block; margin-bottom: 5px; font-weight: 600; color: #4a5568;">ステータス</label>';
+        html += '<select id="preview_status_' + index + '" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">';
+        html += '<option value="見込み"' + (item.status === '見込み' ? ' selected' : '') + '>見込み</option>';
+        html += '<option value="成約"' + (item.status === '成約' ? ' selected' : '') + '>成約</option>';
+        html += '</select>';
+        html += '</div>';
+        
+        html += '</div>';
+        
+        // ライセンス情報（編集可能）
+        html += '<div style="margin-top: 15px;">';
+        html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">';
+        html += '<label style="font-weight: 600; color: #4a5568;">ライセンス情報</label>';
+        html += '<button onclick="addPreviewLicense(' + index + ')" style="background: #48bb78; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;">➕ ライセンス追加</button>';
+        html += '</div>';
+        
+        html += '<div id="preview_licenses_' + index + '" style="display: flex; flex-direction: column; gap: 10px;">';
+        
+        item.licenses.forEach(function(license, licenseIndex) {
+            html += '<div style="display: flex; gap: 10px; align-items: center;">';
+            html += '<select id="preview_license_type_' + index + '_' + licenseIndex + '" style="flex: 2; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">';
+            html += '<option value="無制限＋0ABJ"' + (license.license_type === '無制限＋0ABJ' ? ' selected' : '') + '>無制限＋0ABJ</option>';
+            html += '<option value="無制限＋050"' + (license.license_type === '無制限＋050' ? ' selected' : '') + '>無制限＋050</option>';
+            html += '<option value="従量制＋0ABJ"' + (license.license_type === '従量制＋0ABJ' ? ' selected' : '') + '>従量制＋0ABJ</option>';
+            html += '<option value="従量制＋050"' + (license.license_type === '従量制＋050' ? ' selected' : '') + '>従量制＋050</option>';
+            html += '<option value="従量制(Pro)"' + (license.license_type === '従量制(Pro)' ? ' selected' : '') + '>従量制(Pro)</option>';
+            html += '<option value="内線のみ"' + (license.license_type === '内線のみ' ? ' selected' : '') + '>内線のみ</option>';
+            html += '</select>';
+            html += '<input type="number" id="preview_license_count_' + index + '_' + licenseIndex + '" value="' + license.license_count + '" min="1" style="flex: 1; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">';
+            html += '<button onclick="removePreviewLicense(' + index + ', ' + licenseIndex + ')" style="background: #f56565; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">🗑️</button>';
+            html += '</div>';
+        });
+        
+        html += '</div>';
+        html += '</div>';
+        
+        // 合計表示
+        html += '<div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid #cbd5e0; text-align: right;">';
+        html += '<span style="font-weight: 600; color: #2d3748;">合計ライセンス数: </span>';
+        html += '<span id="preview_total_' + index + '" style="font-size: 18px; font-weight: 700; color: #2b6cb0;">' + total + '</span>';
+        html += '</div>';
+        
+        html += '</div>';
     });
     
-    html += '</tbody></table>';
+    html += '</div>';
     
     document.getElementById('previewTable').innerHTML = html;
+}
+
+// Remove preview item
+window.removePreviewItem = function(index) {
+    if (confirm('この案件をプレビューから削除しますか？')) {
+        parsedImportData.splice(index, 1);
+        displayPreview();
+    }
+};
+
+// Add preview license
+window.addPreviewLicense = function(index) {
+    if (!parsedImportData[index].licenses) {
+        parsedImportData[index].licenses = [];
+    }
+    parsedImportData[index].licenses.push({
+        license_type: '無制限＋0ABJ',
+        license_count: 1
+    });
+    displayPreview();
+};
+
+// Remove preview license
+window.removePreviewLicense = function(itemIndex, licenseIndex) {
+    if (parsedImportData[itemIndex].licenses.length > 1) {
+        parsedImportData[itemIndex].licenses.splice(licenseIndex, 1);
+        displayPreview();
+    } else {
+        alert('最低1つのライセンスが必要です');
+    }
+};
+
+// Sync preview edits back to parsedImportData
+function syncPreviewEdits() {
+    parsedImportData.forEach(function(item, index) {
+        // Update basic info
+        const customerInput = document.getElementById('preview_customer_' + index);
+        const salesRepSelect = document.getElementById('preview_sales_rep_' + index);
+        const dateInput = document.getElementById('preview_date_' + index);
+        const statusSelect = document.getElementById('preview_status_' + index);
+        
+        if (customerInput) item.customer_name = customerInput.value;
+        if (salesRepSelect) item.sales_rep = salesRepSelect.value;
+        if (dateInput) item.deal_date = dateInput.value;
+        if (statusSelect) item.status = statusSelect.value;
+        
+        // Update licenses
+        item.licenses.forEach(function(license, licenseIndex) {
+            const typeSelect = document.getElementById('preview_license_type_' + index + '_' + licenseIndex);
+            const countInput = document.getElementById('preview_license_count_' + index + '_' + licenseIndex);
+            
+            if (typeSelect) license.license_type = typeSelect.value;
+            if (countInput) license.license_count = parseInt(countInput.value) || 1;
+        });
+    });
+    
+    console.log('✅ プレビュー編集を反映しました:', parsedImportData);
 }
 
 // Import data
@@ -1197,6 +1318,9 @@ window.importData = async function() {
         alert('インポートするデータがありません');
         return;
     }
+    
+    // Sync edits before importing
+    syncPreviewEdits();
     
     const confirmed = confirm(parsedImportData.length + '件の案件をインポートしますか？');
     if (!confirmed) {
