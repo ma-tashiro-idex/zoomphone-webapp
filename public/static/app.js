@@ -428,8 +428,7 @@ async function loadDashboard() {
         html += '<div style="background: rgba(255, 255, 255, 0.2); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">';
         html += '<div style="font-size: 14px; opacity: 0.95; margin-bottom: 10px; font-weight: 600;">目標達成まで</div>';
         if (confirmedRemaining > 0) {
-            html += '<div style="font-size: 32px; font-weight: bold; line-height: 1.3;">あと' + confirmedRemaining + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">ライセンス</span></div>';
-            html += '<div style="font-size: 14px; opacity: 0.75; margin-top: 6px;">💡 見込み含む: あと' + totalRemaining + '</div>';
+            html += '<div style="font-size: 32px; font-weight: bold; line-height: 1.3;">あと' + confirmedRemaining + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">ライセンス</span> <span style="font-size: 13px; opacity: 0.7; margin-left: 15px;">💡 見込み含む:あと' + totalRemaining + '</span></div>';
         } else {
             html += '<div style="font-size: 28px; font-weight: bold; line-height: 1;">🎊 達成済み</div>';
         }
@@ -438,8 +437,7 @@ async function loadDashboard() {
         // 3. 達成率（成約ベース）
         html += '<div style="background: rgba(255, 255, 255, 0.2); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">';
         html += '<div style="font-size: 14px; opacity: 0.95; margin-bottom: 10px; font-weight: 600;">達成率</div>';
-        html += '<div style="font-size: 32px; font-weight: bold; line-height: 1.3;">' + confirmedRate + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">%</span></div>';
-        html += '<div style="font-size: 14px; opacity: 0.75; margin-top: 6px;">💡 見込み含む: ' + totalRate + '%</div>';
+        html += '<div style="font-size: 32px; font-weight: bold; line-height: 1.3;">' + confirmedRate + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">%</span> <span style="font-size: 13px; opacity: 0.7; margin-left: 15px;">💡 見込み含む:' + totalRate + '%</span></div>';
         html += '</div>';
         
         // 下段
