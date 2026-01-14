@@ -28,6 +28,9 @@ let currentUser = null;
 let currentUserEmail = null;
 let isTestMode = false;
 
+// Store all deals for filtering
+let allDeals = [];
+
 // API base URL
 const API_BASE = '/api';
 
@@ -197,6 +200,9 @@ async function loadDashboard() {
         const dealsResponse = await apiCall(API_BASE + '/deals');
         const deals = dealsResponse.data;
         
+        // Store all deals for filtering
+        allDeals = deals;
+        
         // Render dashboard HTML
         let html = '<div class="card">';
         html += '<h2>📊 ダッシュボード - 2025年度</h2>';
@@ -246,6 +252,61 @@ async function loadDashboard() {
         html += '<div class="progress-fill" style="width: ' + progressWidth + '%">';
         html += stats.achievement_rate + '%';
         html += '</div>';
+        html += '</div>';
+        
+        // Search and Filter Section
+        html += '<div style="background: white; padding: 20px; border-radius: 12px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">';
+        html += '<h3 style="margin-top: 0; margin-bottom: 15px; color: #2d3748;">🔍 検索・フィルター</h3>';
+        
+        html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">';
+        
+        // Search by customer name
+        html += '<div>';
+        html += '<label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600; font-size: 14px;">顧客名検索</label>';
+        html += '<input type="text" id="searchCustomer" placeholder="顧客名を入力..." onkeyup="applyFilters()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">';
+        html += '</div>';
+        
+        // Filter by sales rep
+        html += '<div>';
+        html += '<label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600; font-size: 14px;">営業担当者</label>';
+        html += '<select id="filterSalesRep" onchange="applyFilters()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">';
+        html += '<option value="">すべて</option>';
+        html += '<option value="山田">山田</option>';
+        html += '<option value="阿部">阿部</option>';
+        html += '</select>';
+        html += '</div>';
+        
+        // Filter by status
+        html += '<div>';
+        html += '<label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600; font-size: 14px;">ステータス</label>';
+        html += '<select id="filterStatus" onchange="applyFilters()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">';
+        html += '<option value="">すべて</option>';
+        html += '<option value="見込み">見込み</option>';
+        html += '<option value="成約">成約</option>';
+        html += '</select>';
+        html += '</div>';
+        
+        // Date range filter
+        html += '<div>';
+        html += '<label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600; font-size: 14px;">登録日（開始）</label>';
+        html += '<input type="date" id="filterDateFrom" onchange="applyFilters()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">';
+        html += '</div>';
+        
+        html += '<div>';
+        html += '<label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600; font-size: 14px;">登録日（終了）</label>';
+        html += '<input type="date" id="filterDateTo" onchange="applyFilters()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">';
+        html += '</div>';
+        
+        html += '</div>';
+        
+        // Clear filters and results count
+        html += '<div style="display: flex; justify-content: space-between; align-items: center;">';
+        html += '<div id="filterResults" style="color: #718096; font-size: 14px;">表示件数: ' + deals.length + '件 / 全' + deals.length + '件</div>';
+        html += '<button onclick="clearFilters()" style="background: #e2e8f0; color: #2d3748; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">';
+        html += '🔄 フィルタークリア';
+        html += '</button>';
+        html += '</div>';
+        
         html += '</div>';
         
         // Deals List with Add, Import, Export, Template Buttons
@@ -1138,4 +1199,103 @@ function downloadCSVFile(csvContent, filename) {
     document.body.removeChild(link);
     
     URL.revokeObjectURL(url);
+}
+
+// ===== Search & Filter Functions =====
+
+// Apply filters
+window.applyFilters = function() {
+    console.log('🔍 フィルター適用開始');
+    
+    // Get filter values
+    const searchText = document.getElementById('searchCustomer').value.toLowerCase().trim();
+    const filterSalesRep = document.getElementById('filterSalesRep').value;
+    const filterStatus = document.getElementById('filterStatus').value;
+    const filterDateFrom = document.getElementById('filterDateFrom').value;
+    const filterDateTo = document.getElementById('filterDateTo').value;
+    
+    console.log('フィルター条件:', {
+        searchText: searchText,
+        salesRep: filterSalesRep,
+        status: filterStatus,
+        dateFrom: filterDateFrom,
+        dateTo: filterDateTo
+    });
+    
+    // Filter deals
+    let filteredDeals = allDeals.filter(function(deal) {
+        // Search by customer name
+        if (searchText && !deal.customer_name.toLowerCase().includes(searchText)) {
+            return false;
+        }
+        
+        // Filter by sales rep
+        if (filterSalesRep && deal.sales_rep !== filterSalesRep) {
+            return false;
+        }
+        
+        // Filter by status
+        if (filterStatus && deal.status !== filterStatus) {
+            return false;
+        }
+        
+        // Filter by date range
+        if (filterDateFrom && deal.deal_date < filterDateFrom) {
+            return false;
+        }
+        
+        if (filterDateTo && deal.deal_date > filterDateTo) {
+            return false;
+        }
+        
+        return true;
+    });
+    
+    console.log('✅ フィルター結果:', filteredDeals.length + '件 / 全' + allDeals.length + '件');
+    
+    // Update deals list
+    updateDealsList(filteredDeals);
+    
+    // Update results count
+    document.getElementById('filterResults').textContent = '表示件数: ' + filteredDeals.length + '件 / 全' + allDeals.length + '件';
+}
+
+// Clear filters
+window.clearFilters = function() {
+    console.log('🔄 フィルタークリア');
+    
+    // Clear input values
+    document.getElementById('searchCustomer').value = '';
+    document.getElementById('filterSalesRep').value = '';
+    document.getElementById('filterStatus').value = '';
+    document.getElementById('filterDateFrom').value = '';
+    document.getElementById('filterDateTo').value = '';
+    
+    // Show all deals
+    updateDealsList(allDeals);
+    
+    // Update results count
+    document.getElementById('filterResults').textContent = '表示件数: ' + allDeals.length + '件 / 全' + allDeals.length + '件';
+}
+
+// Update deals list
+function updateDealsList(deals) {
+    const dealsListContainer = document.getElementById('dealsList');
+    
+    if (!dealsListContainer) {
+        console.warn('dealsList container not found');
+        return;
+    }
+    
+    if (deals.length === 0) {
+        dealsListContainer.innerHTML = '<p class="loading">条件に一致する案件が見つかりませんでした</p>';
+        return;
+    }
+    
+    let html = '';
+    deals.forEach(function(deal) {
+        html += renderDealItem(deal);
+    });
+    
+    dealsListContainer.innerHTML = html;
 }

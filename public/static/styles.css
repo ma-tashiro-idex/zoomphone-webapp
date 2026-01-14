@@ -230,8 +230,12 @@ h1 {
 /* Loading */
 .loading {
     text-align: center;
-    padding: 50px;
-    color: #718096;
+    padding: 40px;
+    color: #a0aec0;
+    font-size: 16px;
+    background: #f7fafc;
+    border-radius: 8px;
+    border: 2px dashed #e2e8f0;
 }
 
 /* Error message */
