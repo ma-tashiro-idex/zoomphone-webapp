@@ -20,8 +20,93 @@ app.use('/api/*', cors());
 // Serve static files from public directory
 app.use('/static/*', serveStatic({ root: './public' }));
 
-// Serve diagnostic page
-app.get('/diagnose', serveStatic({ path: './public/diagnose.html' }));
+// Serve diagnostic page (read file directly)
+app.get('/diagnose', async (c) => {
+  return c.html(`<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>診断ページ - ZoomPhone v2.0</title>
+    <style>
+        body { font-family: 'Courier New', monospace; background: #1a202c; color: #e2e8f0; padding: 20px; margin: 0; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { color: #48bb78; border-bottom: 2px solid #48bb78; padding-bottom: 10px; }
+        h2 { color: #4299e1; margin-top: 30px; }
+        .test-section { background: #2d3748; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .status { display: inline-block; padding: 5px 15px; border-radius: 20px; font-weight: bold; margin-left: 10px; }
+        .status.ok { background: #48bb78; color: white; }
+        .status.error { background: #fc8181; color: white; }
+        .status.pending { background: #fbbf24; color: #1a202c; }
+        pre { background: #1a202c; padding: 15px; border-radius: 5px; overflow-x: auto; border-left: 4px solid #4299e1; }
+        button { background: #4299e1; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px; margin: 5px; }
+        button:hover { background: #3182ce; }
+        .link { color: #4299e1; text-decoration: none; }
+        .link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 ZoomPhone v2.0 システム診断</h1>
+        
+        <div class="test-section">
+            <h2>📍 環境情報</h2>
+            <p><strong>現在のURL:</strong> <span id="currentUrl"></span></p>
+            <p><strong>ホスト名:</strong> <span id="hostname"></span></p>
+            <p><strong>プロトコル:</strong> <span id="protocol"></span></p>
+        </div>
+
+        <div class="test-section">
+            <h2>🌐 API接続テスト</h2>
+            <div id="apiTest">
+                <span class="status pending">テスト中...</span>
+                <button onclick="testAPI()">再テスト</button>
+            </div>
+            <pre id="apiResult">テスト実行中...</pre>
+        </div>
+
+        <div class="test-section">
+            <h2>🚀 アクセス方法</h2>
+            <p><strong>通常モード:</strong> <a class="link" href="/" target="_blank">メインページ</a></p>
+            <p><strong>テストモード:</strong> <a class="link" href="/?test=true" target="_blank">認証バイパス</a></p>
+            <button onclick="window.location.href='/?test=true'">テストモードで起動</button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('currentUrl').textContent = window.location.href;
+        document.getElementById('hostname').textContent = window.location.hostname;
+        document.getElementById('protocol').textContent = window.location.protocol;
+        
+        async function testAPI() {
+            const container = document.getElementById('apiTest');
+            const result = document.getElementById('apiResult');
+            
+            container.innerHTML = '<span class="status pending">テスト中...</span>';
+            result.textContent = 'APIに接続中...';
+            
+            try {
+                const response = await fetch('/api/stats?email=hi-abe@idex.co.jp');
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    container.innerHTML = '<span class="status ok">成功 ✅</span>';
+                    result.textContent = JSON.stringify(data, null, 2);
+                } else {
+                    container.innerHTML = '<span class="status error">失敗 ❌</span>';
+                    result.textContent = JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                container.innerHTML = '<span class="status error">エラー ❌</span>';
+                result.textContent = 'エラー: ' + error.message;
+            }
+        }
+        
+        testAPI();
+    </script>
+</body>
+</html>`);
+});
 
 // Simple authentication middleware (checks email in query/header)
 // In production, use Firebase Admin SDK for proper token verification
