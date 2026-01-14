@@ -8,9 +8,22 @@ const firebaseConfig = {
     projectId: "zoomphone-8eb29"
 };
 
+console.log('🔥 Firebase初期化中...');
+console.log('📍 現在のドメイン:', window.location.hostname);
+console.log('🌐 完全なURL:', window.location.href);
+
 // Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+try {
+    firebase.initializeApp(firebaseConfig);
+    console.log('✅ Firebase初期化成功');
+} catch (error) {
+    console.error('❌ Firebase初期化エラー:', error);
+    alert('Firebase初期化に失敗しました: ' + error.message);
+}
+
 const auth = firebase.auth();
+console.log('🔐 Firebase Auth初期化完了');
+
 let currentUser = null;
 let currentUserEmail = null;
 
@@ -19,14 +32,38 @@ const API_BASE = '/api';
 
 // Google Login
 function loginWithGoogle() {
+    console.log('ログイン処理開始...');
     const provider = new firebase.auth.GoogleAuthProvider();
+    
+    // Force account selection
+    provider.setCustomParameters({
+        prompt: 'select_account'
+    });
+    
     auth.signInWithPopup(provider)
         .then((result) => {
-            console.log('ログイン成功:', result.user.email);
+            console.log('✅ ログイン成功:', result.user.email);
         })
         .catch((error) => {
-            console.error('ログインエラー:', error);
-            alert('ログインに失敗しました: ' + error.message);
+            console.error('❌ ログインエラー:', error);
+            console.error('エラーコード:', error.code);
+            console.error('エラーメッセージ:', error.message);
+            
+            let errorMessage = 'ログインに失敗しました。';
+            
+            if (error.code === 'auth/unauthorized-domain') {
+                errorMessage = '⚠️ このドメインはFirebaseで認証されていません。\n\n' +
+                    '開発者へ: Firebase Console > Authentication > Settings > Authorized domains に以下を追加してください:\n' +
+                    window.location.hostname;
+            } else if (error.code === 'auth/popup-blocked') {
+                errorMessage = 'ポップアップがブロックされました。ブラウザの設定を確認してください。';
+            } else if (error.code === 'auth/popup-closed-by-user') {
+                errorMessage = 'ログインがキャンセルされました。';
+            } else {
+                errorMessage += '\n\nエラー: ' + error.message;
+            }
+            
+            alert(errorMessage);
         });
 }
 
@@ -39,18 +76,27 @@ function logout() {
 
 // Auth state observer
 auth.onAuthStateChanged(user => {
+    console.log('🔐 認証状態変更:', user ? user.email : 'ログアウト');
+    
     if (user) {
         currentUser = user;
         currentUserEmail = user.email;
         
+        console.log('✅ ユーザー認証済み:', user.email);
+        console.log('📧 アクセス権限確認中...');
+        
         // Verify access permission with backend
         verifyAccess(user.email).then(allowed => {
+            console.log('🔍 アクセス権限結果:', allowed);
+            
             if (!allowed) {
-                alert('⚠️ アクセス権限がありません\\n\\nこのアカウント（' + user.email + '）にはシステムへのアクセス権限が付与されていません。\\n\\n管理者に問い合わせてください。');
+                console.warn('⚠️ アクセス権限なし:', user.email);
+                alert('⚠️ アクセス権限がありません\n\nこのアカウント（' + user.email + '）にはシステムへのアクセス権限が付与されていません。\n\n管理者に問い合わせてください。');
                 auth.signOut();
                 return;
             }
             
+            console.log('✅ アクセス許可:', user.email);
             document.getElementById('authContainer').style.display = 'none';
             document.getElementById('mainContent').style.display = 'block';
             
@@ -60,18 +106,24 @@ auth.onAuthStateChanged(user => {
                 const userInfo = document.createElement('span');
                 userInfo.id = 'userInfo';
                 userInfo.className = 'user-info';
-                userInfo.innerHTML = \`
-                    <div class="user-avatar">\${user.email.charAt(0).toUpperCase()}</div>
-                    <span>\${user.email}</span>
+                userInfo.innerHTML = `
+                    <div class="user-avatar">${user.email.charAt(0).toUpperCase()}</div>
+                    <span>${user.email}</span>
                     <button class="logout-btn" onclick="logout()">ログアウト</button>
-                \`;
+                `;
                 header.appendChild(userInfo);
             }
             
+            console.log('📊 ダッシュボード読み込み開始...');
             // Load dashboard
             loadDashboard();
+        }).catch(error => {
+            console.error('❌ アクセス権限確認エラー:', error);
+            alert('アクセス権限の確認に失敗しました: ' + error.message);
+            auth.signOut();
         });
     } else {
+        console.log('❌ 未認証状態');
         currentUser = null;
         currentUserEmail = null;
         document.getElementById('authContainer').style.display = 'flex';
@@ -245,3 +297,30 @@ function renderDealItem(deal) {
 
 // Initialize on page load
 console.log('ZoomPhone Management System v2.0 - Frontend loaded');
+
+// テストモード: URLに ?test=true がある場合は認証をバイパス
+if (window.location.search.includes('test=true')) {
+    console.log('🧪 テストモード有効');
+    console.log('⚠️ 認証をバイパスしています（開発用）');
+    
+    // テスト用のメールアドレスを設定
+    currentUserEmail = 'hi-abe@idex.co.jp'; // 許可リストの最初のユーザー
+    
+    document.getElementById('authContainer').style.display = 'none';
+    document.getElementById('mainContent').style.display = 'block';
+    
+    const header = document.querySelector('header h1');
+    if (header && !document.getElementById('userInfo')) {
+        const userInfo = document.createElement('span');
+        userInfo.id = 'userInfo';
+        userInfo.className = 'user-info';
+        userInfo.innerHTML = `
+            <div class="user-avatar">T</div>
+            <span>テストモード (${currentUserEmail})</span>
+            <button class="logout-btn" onclick="location.href=location.pathname">終了</button>
+        `;
+        header.appendChild(userInfo);
+    }
+    
+    loadDashboard();
+}

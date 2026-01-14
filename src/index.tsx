@@ -210,6 +210,17 @@ app.get('/', (c) => {
                 </svg>
                 Googleでログイン
             </button>
+            
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                <p style="font-size: 12px; color: #a0aec0; margin-bottom: 10px;">
+                    ⚠️ Firebaseのドメイン認証エラーが発生する場合
+                </p>
+                <a href="?test=true" style="display: inline-block; padding: 10px 20px; background: #f7fafc; 
+                   border: 2px solid #e2e8f0; border-radius: 8px; color: #4a5568; text-decoration: none; 
+                   font-size: 14px; font-weight: 600; transition: all 0.3s;">
+                    🧪 テストモードで起動
+                </a>
+            </div>
         </div>
     </div>
     
