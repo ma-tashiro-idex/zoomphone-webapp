@@ -165,6 +165,61 @@ app.get('/api/deals', async (c) => {
 /**
  * GET /api/deals/:customerName - Get specific deal
  */
+/**
+ * GET /api/deals/:id - Get deal by ID (numeric)
+ */
+app.get('/api/deals/:id{[0-9]+}', async (c) => {
+  try {
+    const id = parseInt(c.req.param('id'));
+    const deal = await c.env.DB.prepare(`
+      SELECT d.*, 
+             GROUP_CONCAT(l.license_type || '|' || l.license_count) as licenses_data
+      FROM deals d
+      LEFT JOIN licenses l ON d.id = l.deal_id
+      WHERE d.id = ?
+      GROUP BY d.id
+    `).bind(id).first();
+    
+    if (!deal) {
+      return c.json({ success: false, error: '案件が見つかりません' }, 404);
+    }
+    
+    // Parse licenses
+    const licenses = [];
+    if (deal.licenses_data) {
+      const licensesArray = deal.licenses_data.split(',');
+      for (const licenseStr of licensesArray) {
+        const [type, count] = licenseStr.split('|');
+        licenses.push({
+          license_type: type,
+          license_count: parseInt(count)
+        });
+      }
+    }
+    
+    return c.json({
+      success: true,
+      data: {
+        id: deal.id,
+        customer_name: deal.customer_name,
+        sales_rep: deal.sales_rep,
+        deal_date: deal.deal_date,
+        status: deal.status,
+        source: deal.source,
+        created_at: deal.created_at,
+        updated_at: deal.updated_at,
+        licenses: licenses
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching deal by ID:', error);
+    return c.json({ success: false, error: 'データの取得に失敗しました' }, 500);
+  }
+});
+
+/**
+ * GET /api/deals/:customerName - Get deal by customer name
+ */
 app.get('/api/deals/:customerName', async (c) => {
   try {
     const customerName = c.req.param('customerName');

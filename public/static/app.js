@@ -248,8 +248,14 @@ async function loadDashboard() {
         html += '</div>';
         html += '</div>';
         
-        // Deals List
-        html += '<h3 style="margin-top: 30px; margin-bottom: 15px; color: #2d3748;">💼 案件一覧</h3>';
+        // Deals List with Add Button
+        html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; margin-bottom: 15px;">';
+        html += '<h3 style="margin: 0; color: #2d3748;">💼 案件一覧</h3>';
+        html += '<button onclick="showAddDealModal()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+        html += '➕ 新規案件追加';
+        html += '</button>';
+        html += '</div>';
+        
         html += '<div id="dealsList">';
         
         if (deals.length === 0) {
@@ -302,6 +308,17 @@ function renderDealItem(deal) {
     html += '📅 登録日: ' + date;
     html += '</div>';
     html += '</div>';
+    
+    // Action buttons
+    html += '<div style="display: flex; gap: 8px;">';
+    html += '<button onclick="editDeal(' + deal.id + ')" style="background: #4299e1; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">';
+    html += '✏️ 編集';
+    html += '</button>';
+    html += '<button onclick="deleteDeal(' + deal.id + ', \'' + deal.customer_name.replace(/'/g, "\\'") + '\')" style="background: #f56565; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 14px;">';
+    html += '🗑️ 削除';
+    html += '</button>';
+    html += '</div>';
+    
     html += '</div>';
     html += '</div>';
     
@@ -357,3 +374,338 @@ function initTestMode() {
 
 console.log('✅ loginWithGoogle関数が利用可能:', typeof window.loginWithGoogle === 'function');
 console.log('✅ logout関数が利用可能:', typeof window.logout === 'function');
+
+// ===== CRUD Functions =====
+
+// Show add deal modal
+window.showAddDealModal = function() {
+    const modalHtml = `
+        <div id="dealModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+            <div style="background: white; padding: 30px; border-radius: 12px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+                <h2 style="margin-top: 0; color: #2d3748;">➕ 新規案件追加</h2>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600;">顧客名 *</label>
+                    <input type="text" id="customerName" placeholder="例: 株式会社サンプル" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600;">営業担当者 *</label>
+                    <select id="salesRep" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
+                        <option value="">選択してください</option>
+                        <option value="山田">山田</option>
+                        <option value="阿部">阿部</option>
+                    </select>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600;">登録日 *</label>
+                    <input type="date" id="dealDate" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600;">ステータス *</label>
+                    <select id="dealStatus" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
+                        <option value="見込み">見込み</option>
+                        <option value="成約">成約</option>
+                    </select>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 10px; color: #4a5568; font-weight: 600;">ライセンス情報 *</label>
+                    <div id="licenseRows"></div>
+                    <button onclick="addLicenseRow()" style="background: #48bb78; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-top: 10px;">
+                        ➕ ライセンス追加
+                    </button>
+                </div>
+                
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button onclick="closeModal()" style="background: #cbd5e0; color: #2d3748; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                        キャンセル
+                    </button>
+                    <button onclick="saveDeal()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                        保存
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Set today's date as default
+    document.getElementById('dealDate').valueAsDate = new Date();
+    
+    // Add initial license row
+    addLicenseRow();
+}
+
+// Add license row
+window.addLicenseRow = function() {
+    const container = document.getElementById('licenseRows');
+    const rowId = 'license_' + Date.now();
+    
+    const rowHtml = `
+        <div id="${rowId}" style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
+            <select class="licenseType" style="flex: 2; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
+                <option value="">種別を選択</option>
+                <option value="無制限(0ABJ)">無制限(0ABJ)</option>
+                <option value="無制限(050)">無制限(050)</option>
+                <option value="従量制">従量制</option>
+                <option value="内線のみ">内線のみ</option>
+            </select>
+            <input type="number" class="licenseCount" placeholder="数量" min="1" style="flex: 1; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
+            <button onclick="removeLicenseRow('${rowId}')" style="background: #f56565; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">
+                🗑️
+            </button>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', rowHtml);
+}
+
+// Remove license row
+window.removeLicenseRow = function(rowId) {
+    const row = document.getElementById(rowId);
+    if (row) {
+        row.remove();
+    }
+}
+
+// Close modal
+window.closeModal = function() {
+    const modal = document.getElementById('dealModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Save deal
+window.saveDeal = async function() {
+    try {
+        // Get form values
+        const customerName = document.getElementById('customerName').value.trim();
+        const salesRep = document.getElementById('salesRep').value;
+        const dealDate = document.getElementById('dealDate').value;
+        const status = document.getElementById('dealStatus').value;
+        
+        // Validate
+        if (!customerName || !salesRep || !dealDate) {
+            alert('顧客名、営業担当者、登録日は必須です');
+            return;
+        }
+        
+        // Get licenses
+        const licenseTypes = document.querySelectorAll('.licenseType');
+        const licenseCounts = document.querySelectorAll('.licenseCount');
+        const licenses = [];
+        
+        for (let i = 0; i < licenseTypes.length; i++) {
+            const type = licenseTypes[i].value;
+            const count = parseInt(licenseCounts[i].value);
+            
+            if (type && count > 0) {
+                licenses.push({
+                    license_type: type,
+                    license_count: count
+                });
+            }
+        }
+        
+        if (licenses.length === 0) {
+            alert('少なくとも1つのライセンス情報を入力してください');
+            return;
+        }
+        
+        // Save to API
+        console.log('📝 案件保存中...');
+        await apiCall(API_BASE + '/deals', {
+            method: 'POST',
+            body: JSON.stringify({
+                customer_name: customerName,
+                sales_rep: salesRep,
+                deal_date: dealDate,
+                status: status,
+                licenses: licenses
+            })
+        });
+        
+        console.log('✅ 案件保存成功');
+        alert('✅ 案件を追加しました');
+        
+        // Close modal and reload dashboard
+        closeModal();
+        loadDashboard();
+        
+    } catch (error) {
+        console.error('❌ 案件保存エラー:', error);
+        alert('❌ 案件の保存に失敗しました: ' + error.message);
+    }
+}
+
+// Edit deal
+window.editDeal = async function(dealId) {
+    try {
+        console.log('📝 案件編集: ID=' + dealId);
+        
+        // Fetch deal details
+        const response = await apiCall(API_BASE + '/deals/' + dealId);
+        const deal = response.data;
+        
+        console.log('📄 案件データ取得:', deal);
+        
+        // Show edit modal (similar to add modal but with pre-filled data)
+        const modalHtml = `
+            <div id="dealModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+                <div style="background: white; padding: 30px; border-radius: 12px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+                    <h2 style="margin-top: 0; color: #2d3748;">✏️ 案件編集</h2>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600;">顧客名 *</label>
+                        <input type="text" id="customerName" value="${deal.customer_name}" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600;">営業担当者 *</label>
+                        <select id="salesRep" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
+                            <option value="山田" ${deal.sales_rep === '山田' ? 'selected' : ''}>山田</option>
+                            <option value="阿部" ${deal.sales_rep === '阿部' ? 'selected' : ''}>阿部</option>
+                        </select>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600;">登録日 *</label>
+                        <input type="date" id="dealDate" value="${deal.deal_date}" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600;">ステータス *</label>
+                        <select id="dealStatus" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
+                            <option value="見込み" ${deal.status === '見込み' ? 'selected' : ''}>見込み</option>
+                            <option value="成約" ${deal.status === '成約' ? 'selected' : ''}>成約</option>
+                        </select>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 10px; color: #4a5568; font-weight: 600;">ライセンス情報 *</label>
+                        <div id="licenseRows"></div>
+                        <button onclick="addLicenseRow()" style="background: #48bb78; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-top: 10px;">
+                            ➕ ライセンス追加
+                        </button>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button onclick="closeModal()" style="background: #cbd5e0; color: #2d3748; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                            キャンセル
+                        </button>
+                        <button onclick="updateDeal(${dealId})" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                            更新
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        
+        // Add existing licenses
+        deal.licenses.forEach(function(license) {
+            addLicenseRow();
+            const lastRow = document.getElementById('licenseRows').lastElementChild;
+            lastRow.querySelector('.licenseType').value = license.license_type;
+            lastRow.querySelector('.licenseCount').value = license.license_count;
+        });
+        
+    } catch (error) {
+        console.error('❌ 案件取得エラー:', error);
+        alert('❌ 案件の取得に失敗しました: ' + error.message);
+    }
+}
+
+// Update deal
+window.updateDeal = async function(dealId) {
+    try {
+        // Get form values
+        const customerName = document.getElementById('customerName').value.trim();
+        const salesRep = document.getElementById('salesRep').value;
+        const dealDate = document.getElementById('dealDate').value;
+        const status = document.getElementById('dealStatus').value;
+        
+        // Validate
+        if (!customerName || !salesRep || !dealDate) {
+            alert('顧客名、営業担当者、登録日は必須です');
+            return;
+        }
+        
+        // Get licenses
+        const licenseTypes = document.querySelectorAll('.licenseType');
+        const licenseCounts = document.querySelectorAll('.licenseCount');
+        const licenses = [];
+        
+        for (let i = 0; i < licenseTypes.length; i++) {
+            const type = licenseTypes[i].value;
+            const count = parseInt(licenseCounts[i].value);
+            
+            if (type && count > 0) {
+                licenses.push({
+                    license_type: type,
+                    license_count: count
+                });
+            }
+        }
+        
+        if (licenses.length === 0) {
+            alert('少なくとも1つのライセンス情報を入力してください');
+            return;
+        }
+        
+        // Update via API
+        console.log('📝 案件更新中...');
+        await apiCall(API_BASE + '/deals/' + dealId, {
+            method: 'PUT',
+            body: JSON.stringify({
+                customer_name: customerName,
+                sales_rep: salesRep,
+                deal_date: dealDate,
+                status: status,
+                licenses: licenses
+            })
+        });
+        
+        console.log('✅ 案件更新成功');
+        alert('✅ 案件を更新しました');
+        
+        // Close modal and reload dashboard
+        closeModal();
+        loadDashboard();
+        
+    } catch (error) {
+        console.error('❌ 案件更新エラー:', error);
+        alert('❌ 案件の更新に失敗しました: ' + error.message);
+    }
+}
+
+// Delete deal
+window.deleteDeal = async function(dealId, customerName) {
+    if (!confirm('本当に「' + customerName + '」の案件を削除しますか？\n\nこの操作は取り消せません。')) {
+        return;
+    }
+    
+    try {
+        console.log('🗑️ 案件削除中: ID=' + dealId);
+        
+        await apiCall(API_BASE + '/deals/' + dealId, {
+            method: 'DELETE'
+        });
+        
+        console.log('✅ 案件削除成功');
+        alert('✅ 案件を削除しました');
+        
+        // Reload dashboard
+        loadDashboard();
+        
+    } catch (error) {
+        console.error('❌ 案件削除エラー:', error);
+        alert('❌ 案件の削除に失敗しました: ' + error.message);
+    }
+}
