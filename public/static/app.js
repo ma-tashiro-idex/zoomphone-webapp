@@ -26,6 +26,7 @@ console.log('🔐 Firebase Auth初期化完了');
 
 let currentUser = null;
 let currentUserEmail = null;
+let isTestMode = false;
 
 // API base URL
 const API_BASE = '/api';
@@ -76,6 +77,12 @@ window.logout = function() {
 
 // Auth state observer
 auth.onAuthStateChanged(user => {
+    // テストモードの場合はFirebase認証を無視
+    if (isTestMode) {
+        console.log('🧪 テストモード: Firebase認証を無視');
+        return;
+    }
+    
     console.log('🔐 認証状態変更:', user ? user.email : 'ログアウト');
     
     if (user) {
@@ -142,12 +149,18 @@ async function verifyAccess(email) {
 
 // API helper function
 async function apiCall(endpoint, options = {}) {
+    console.log('📞 apiCall開始:', endpoint);
+    console.log('📧 currentUserEmail:', currentUserEmail);
+    
     if (!currentUserEmail) {
+        console.error('❌ currentUserEmailが未設定！');
         throw new Error('認証が必要です');
     }
     
     const url = new URL(endpoint, window.location.origin);
     url.searchParams.append('email', currentUserEmail);
+    
+    console.log('🌐 リクエストURL:', url.toString());
     
     const response = await fetch(url, {
         ...options,
@@ -158,12 +171,16 @@ async function apiCall(endpoint, options = {}) {
         }
     });
     
+    console.log('📥 レスポンスステータス:', response.status);
+    
     const data = await response.json();
     
     if (!response.ok) {
+        console.error('❌ APIエラー:', data.error);
         throw new Error(data.error || 'リクエストに失敗しました');
     }
     
+    console.log('✅ API成功:', endpoint);
     return data;
 }
 
@@ -296,6 +313,7 @@ console.log('ZoomPhone Management System v2.0 - Frontend loaded');
 
 // テストモード: URLに ?test=true がある場合は認証をバイパス
 if (window.location.search.includes('test=true')) {
+    isTestMode = true;
     console.log('🧪 テストモード有効');
     console.log('⚠️ 認証をバイパスしています（開発用）');
     
