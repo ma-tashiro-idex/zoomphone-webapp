@@ -391,17 +391,9 @@ async function loadDashboard() {
         // Render modern dashboard HTML
         let html = confettiStyles + confettiHtml + '<div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">';
         
-        // Filter section
-        html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #e2e8f0;">';
+        // Header
+        html += '<div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #e2e8f0;">';
         html += '<h2 style="color: #0284c7; font-size: 24px; margin: 0;">📈 進捗ダッシュボード</h2>';
-        html += '<div style="display: flex; gap: 10px; align-items: center;">';
-        html += '<span style="font-weight: 600; color: #475569; font-size: 14px;">表示切替：</span>';
-        html += '<select id="displayMode" onchange="changeDisplayMode()" style="padding: 10px 20px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-weight: 600; background: white; cursor: pointer;">';
-        html += '<option value="all">見込み＋成約</option>';
-        html += '<option value="confirmed">成約のみ</option>';
-        html += '<option value="prospect">見込みのみ</option>';
-        html += '</select>';
-        html += '</div>';
         html += '</div>';
         
         // Main progress card
@@ -416,6 +408,12 @@ async function loadDashboard() {
             html += '</div>';
         }
         
+        // 成約のみの計算
+        const confirmedRemaining = 1000 - stats.confirmed_licenses;
+        const confirmedRate = Math.round((stats.confirmed_licenses / 1000) * 100);
+        const totalRemaining = 1000 - stats.total_licenses;
+        const totalRate = stats.achievement_rate;
+        
         // Progress grid (3x2) - 6項目カード
         html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px;">';
         
@@ -426,20 +424,22 @@ async function loadDashboard() {
         html += '<div style="font-size: 32px; font-weight: bold; line-height: 1;">1,000<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">ライセンス</span></div>';
         html += '</div>';
         
-        // 2. 目標達成まで
+        // 2. 目標達成まで（成約ベース）
         html += '<div style="background: rgba(255, 255, 255, 0.2); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">';
-        html += '<div style="font-size: 14px; opacity: 0.95; margin-bottom: 10px; font-weight: 600;">目標達成まで</div>';
-        if (stats.remaining_target > 0) {
-            html += '<div style="font-size: 32px; font-weight: bold; line-height: 1;">あと' + stats.remaining_target + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">ライセンス</span></div>';
+        html += '<div style="font-size: 14px; opacity: 0.95; margin-bottom: 10px; font-weight: 600;">目標達成まで（成約）</div>';
+        if (confirmedRemaining > 0) {
+            html += '<div style="font-size: 32px; font-weight: bold; line-height: 1;">あと' + confirmedRemaining + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">ライセンス</span></div>';
+            html += '<div style="font-size: 12px; opacity: 0.75; margin-top: 8px;">💡 見込み含む: あと' + totalRemaining + '</div>';
         } else {
             html += '<div style="font-size: 28px; font-weight: bold; line-height: 1;">🎊 達成済み</div>';
         }
         html += '</div>';
         
-        // 3. 達成率
+        // 3. 達成率（成約ベース）
         html += '<div style="background: rgba(255, 255, 255, 0.2); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">';
-        html += '<div style="font-size: 14px; opacity: 0.95; margin-bottom: 10px; font-weight: 600;">達成率</div>';
-        html += '<div style="font-size: 32px; font-weight: bold; line-height: 1;">' + stats.achievement_rate + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">%</span></div>';
+        html += '<div style="font-size: 14px; opacity: 0.95; margin-bottom: 10px; font-weight: 600;">達成率（成約）</div>';
+        html += '<div style="font-size: 32px; font-weight: bold; line-height: 1;">' + confirmedRate + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">%</span></div>';
+        html += '<div style="font-size: 12px; opacity: 0.75; margin-top: 8px;">💡 見込み含む: ' + totalRate + '%</div>';
         html += '</div>';
         
         // 下段
