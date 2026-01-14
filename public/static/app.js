@@ -416,27 +416,38 @@ async function loadDashboard() {
             html += '</div>';
         }
         
-        // Progress grid (2x2)
-        html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px;">';
+        // Progress grid (2x2) - 写真と同じデザイン
+        html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">';
         
-        html += '<div style="background: rgba(255, 255, 255, 0.15); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">';
-        html += '<div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px; font-weight: 500;">年間目標（KPI）</div>';
-        html += '<div style="font-size: 32px; font-weight: bold;">1,000<span style="font-size: 16px; opacity: 0.8; margin-left: 8px;">ライセンス</span></div>';
+        // 1. 年間目標（左上）
+        html += '<div style="background: rgba(255, 255, 255, 0.2); padding: 25px; border-radius: 12px; backdrop-filter: blur(10px);">';
+        html += '<div style="font-size: 16px; opacity: 0.95; margin-bottom: 12px; font-weight: 600;">年間目標</div>';
+        html += '<div style="font-size: 48px; font-weight: bold; line-height: 1;">1,000<span style="font-size: 20px; opacity: 0.9; margin-left: 10px;">ライセンス</span></div>';
         html += '</div>';
         
-        html += '<div style="background: rgba(255, 255, 255, 0.15); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">';
-        html += '<div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px; font-weight: 500;">成約ライセンス数</div>';
-        html += '<div style="font-size: 32px; font-weight: bold;">' + stats.confirmed_licenses + '<span style="font-size: 16px; opacity: 0.8; margin-left: 8px;">ライセンス</span></div>';
+        // 2. 現在の総ライセンス数（右上）
+        html += '<div style="background: rgba(255, 255, 255, 0.2); padding: 25px; border-radius: 12px; backdrop-filter: blur(10px);">';
+        html += '<div style="font-size: 16px; opacity: 0.95; margin-bottom: 12px; font-weight: 600;">現在の総ライセンス数</div>';
+        html += '<div style="font-size: 48px; font-weight: bold; line-height: 1;">' + stats.total_licenses + '<span style="font-size: 20px; opacity: 0.9; margin-left: 10px;">ライセンス</span>';
+        // 成約と見込みの内訳を小さく表示
+        html += '<div style="font-size: 14px; opacity: 0.85; margin-top: 8px;">成約: ' + stats.confirmed_licenses + ' / 見込み: ' + stats.prospect_licenses + '</div>';
+        html += '</div>';
         html += '</div>';
         
-        html += '<div style="background: rgba(255, 255, 255, 0.15); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">';
-        html += '<div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px; font-weight: 500;">見込みライセンス数</div>';
-        html += '<div style="font-size: 32px; font-weight: bold;">' + stats.prospect_licenses + '<span style="font-size: 16px; opacity: 0.8; margin-left: 8px;">ライセンス</span></div>';
+        // 3. 目標達成まであと（左下）
+        html += '<div style="background: rgba(255, 255, 255, 0.2); padding: 25px; border-radius: 12px; backdrop-filter: blur(10px);">';
+        html += '<div style="font-size: 16px; opacity: 0.95; margin-bottom: 12px; font-weight: 600;">目標達成まで</div>';
+        if (stats.remaining_target > 0) {
+            html += '<div style="font-size: 48px; font-weight: bold; line-height: 1;">あと' + stats.remaining_target + '<span style="font-size: 20px; opacity: 0.9; margin-left: 10px;">ライセンス</span></div>';
+        } else {
+            html += '<div style="font-size: 36px; font-weight: bold; line-height: 1;">🎊 達成済み</div>';
+        }
         html += '</div>';
         
-        html += '<div style="background: rgba(255, 255, 255, 0.15); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">';
-        html += '<div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px; font-weight: 500;">達成率</div>';
-        html += '<div style="font-size: 32px; font-weight: bold;">' + stats.achievement_rate + '<span style="font-size: 16px; opacity: 0.8; margin-left: 8px;">%</span></div>';
+        // 4. 達成率（右下）
+        html += '<div style="background: rgba(255, 255, 255, 0.2); padding: 25px; border-radius: 12px; backdrop-filter: blur(10px);">';
+        html += '<div style="font-size: 16px; opacity: 0.95; margin-bottom: 12px; font-weight: 600;">達成率</div>';
+        html += '<div style="font-size: 48px; font-weight: bold; line-height: 1;">' + stats.achievement_rate + '<span style="font-size: 20px; opacity: 0.9; margin-left: 10px;">%</span></div>';
         html += '</div>';
         
         html += '</div>';
