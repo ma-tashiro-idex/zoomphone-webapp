@@ -30,8 +30,8 @@ let currentUserEmail = null;
 // API base URL
 const API_BASE = '/api';
 
-// Google Login
-function loginWithGoogle() {
+// Google Login (グローバルスコープに露出)
+window.loginWithGoogle = function() {
     console.log('ログイン処理開始...');
     const provider = new firebase.auth.GoogleAuthProvider();
     
@@ -67,8 +67,8 @@ function loginWithGoogle() {
         });
 }
 
-// Logout
-function logout() {
+// Logout (グローバルスコープに露出)
+window.logout = function() {
     if (confirm('ログアウトしますか?')) {
         auth.signOut();
     }

@@ -69,7 +69,20 @@ app.get('/diagnose', async (c) => {
             <h2>🚀 アクセス方法</h2>
             <p><strong>通常モード:</strong> <a class="link" href="/" target="_blank">メインページ</a></p>
             <p><strong>テストモード:</strong> <a class="link" href="/?test=true" target="_blank">認証バイパス</a></p>
-            <button onclick="window.location.href='/?test=true'">テストモードで起動</button>
+            <button onclick="window.location.href='/?test=true'" style="padding: 15px 30px; font-size: 16px; margin-top: 10px;">
+                🧪 テストモードで起動
+            </button>
+        </div>
+        
+        <div class="test-section">
+            <h2>🐛 ボタンテスト</h2>
+            <p>このボタンをクリックして、JavaScriptが動作するか確認してください：</p>
+            <button onclick="alert('✅ JavaScriptは正常に動作しています！')">
+                ボタン動作テスト
+            </button>
+            <button onclick="testConsole()">
+                コンソールログテスト
+            </button>
         </div>
     </div>
 
@@ -77,6 +90,11 @@ app.get('/diagnose', async (c) => {
         document.getElementById('currentUrl').textContent = window.location.href;
         document.getElementById('hostname').textContent = window.location.hostname;
         document.getElementById('protocol').textContent = window.location.protocol;
+        
+        function testConsole() {
+            console.log('✅ コンソールログテスト成功');
+            alert('コンソールを確認してください（F12キー）');
+        }
         
         async function testAPI() {
             const container = document.getElementById('apiTest');
@@ -102,6 +120,8 @@ app.get('/diagnose', async (c) => {
             }
         }
         
+        // 自動テスト実行
+        console.log('🔍 診断ページ読み込み完了');
         testAPI();
     </script>
 </body>
@@ -281,6 +301,13 @@ app.get('/', (c) => {
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     
     <link href="/static/styles.css" rel="stylesheet">
+    
+    <script>
+        // デバッグ: ページロード時の情報
+        console.log('📄 HTMLページ読み込み開始');
+        console.log('🌐 URL:', window.location.href);
+        console.log('📍 Hostname:', window.location.hostname);
+    </script>
 </head>
 <body>
     <!-- Firebase認証画面 -->
@@ -328,7 +355,39 @@ app.get('/', (c) => {
         </div>
     </div>
     
+    <script>
+        // デバッグ: スクリプト読み込み確認
+        console.log('📦 メインスクリプトタグに到達');
+        
+        // Firebase SDK読み込み確認
+        if (typeof firebase === 'undefined') {
+            console.error('❌ Firebase SDKが読み込まれていません！');
+            alert('エラー: Firebase SDKの読み込みに失敗しました。\\n\\nインターネット接続を確認してください。');
+        } else {
+            console.log('✅ Firebase SDK読み込み完了');
+        }
+        
+        // app.js読み込み前の確認
+        console.log('📥 app.js読み込み開始...');
+    </script>
     <script src="/static/app.js"></script>
+    <script>
+        // app.js読み込み後の確認
+        console.log('✅ app.js読み込み完了');
+        
+        // グローバル関数の存在確認
+        if (typeof window.loginWithGoogle === 'function') {
+            console.log('✅ loginWithGoogle関数が利用可能');
+        } else {
+            console.error('❌ loginWithGoogle関数が見つかりません！');
+        }
+        
+        if (typeof window.logout === 'function') {
+            console.log('✅ logout関数が利用可能');
+        } else {
+            console.error('❌ logout関数が見つかりません！');
+        }
+    </script>
 </body>
 </html>
   `);
