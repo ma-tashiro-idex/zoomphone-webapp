@@ -301,6 +301,23 @@ if (window.location.search.includes('test=true')) {
     
     // テスト用のメールアドレスを設定
     currentUserEmail = 'hi-abe@idex.co.jp';
+    console.log('📧 テストユーザー設定:', currentUserEmail);
+    
+    // DOM準備完了後に実行
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📄 DOM準備完了');
+            initTestMode();
+        });
+    } else {
+        console.log('📄 DOM既に準備完了');
+        initTestMode();
+    }
+}
+
+function initTestMode() {
+    console.log('🔧 テストモード初期化開始...');
+    console.log('📧 currentUserEmail:', currentUserEmail);
     
     document.getElementById('authContainer').style.display = 'none';
     document.getElementById('mainContent').style.display = 'block';
@@ -316,6 +333,7 @@ if (window.location.search.includes('test=true')) {
         header.appendChild(userInfo);
     }
     
+    console.log('📊 ダッシュボード読み込み開始...');
     loadDashboard();
 }
 
