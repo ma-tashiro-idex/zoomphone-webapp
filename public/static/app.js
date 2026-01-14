@@ -203,55 +203,193 @@ async function loadDashboard() {
         // Store all deals for filtering
         allDeals = deals;
         
-        // Determine progress theme based on achievement rate
+        // 9段階の達成率別メッセージシステム
         const rate = stats.achievement_rate;
         let progressTheme = 'normal';
         let progressStatus = '📈 順調に進行中';
         let progressMessage = '目標に向かって着実に進んでいます！';
+        let showConfetti = false;
+        let exceedAmount = 0;
         
-        if (rate < 30) {
-            progressTheme = 'start';
-            progressStatus = '🚀 スタートダッシュ！';
-            progressMessage = '良いスタートを切りました！この調子で！';
-        } else if (rate >= 30 && rate < 50) {
-            progressTheme = 'normal';
-            progressStatus = '📈 順調に進行中';
-            progressMessage = '目標に向かって着実に進んでいます！';
-        } else if (rate >= 50 && rate < 75) {
-            progressTheme = 'halfway';
-            progressStatus = '🎯 折り返し通過';
-            progressMessage = '半分を超えました！引き続き頑張りましょう！';
-        } else if (rate >= 75 && rate < 90) {
-            progressTheme = 'sprint';
-            progressStatus = '🔥 ラストスパート！';
-            progressMessage = 'あと一息！ゴール間近です！';
-        } else if (rate >= 90 && rate < 100) {
-            progressTheme = 'countdown';
-            progressStatus = '⏰ カウントダウン';
-            progressMessage = '💥 もうすぐ達成！最後まで気を抜かずに！';
-        } else if (rate >= 100 && rate < 101) {
-            progressTheme = 'achieved';
-            progressStatus = '🎉 目標達成！！！';
-            progressMessage = '🌟 素晴らしいチームワークでした！';
-        } else {
-            progressTheme = 'exceed';
-            progressStatus = '🏆 大幅目標達成！';
-            progressMessage = '💎 圧倒的な成果！チーム全員に感謝！';
+        // メッセージのランダム選択関数
+        function getRandomMessage(messages) {
+            return messages[Math.floor(Math.random() * messages.length)];
         }
         
-        // Gradient colors based on theme
+        // 9段階の判定とメッセージ
+        if (rate < 30) {
+            // 0-29%: スタートダッシュ（青）
+            progressTheme = 'start';
+            progressStatus = '🚀 スタートダッシュ！';
+            progressMessage = getRandomMessage([
+                '良いスタートを切りました！この調子で！',
+                '順調な滑り出しです！勢いをキープしましょう！',
+                '素晴らしい始まり！このペースを維持しよう！',
+                '最初の一歩は成功！続けて頑張りましょう！',
+                'スタートダッシュ成功！勢いに乗っています！'
+            ]);
+        } else if (rate >= 30 && rate < 50) {
+            // 30-49%: 順調に進行中（緑）
+            progressTheme = 'normal';
+            progressStatus = '📈 順調に進行中';
+            progressMessage = getRandomMessage([
+                '順調に進んでいます！この調子で！',
+                '良いペースです！勢いに乗っています！',
+                '目標に向かって着実に前進中！',
+                'チーム全員で協力して進めています！',
+                '予定通りに進行中！このまま頑張りましょう！'
+            ]);
+        } else if (rate >= 50 && rate < 75) {
+            // 50-74%: 折り返し通過（黄）
+            progressTheme = 'halfway';
+            progressStatus = '🎯 折り返し通過';
+            progressMessage = getRandomMessage([
+                '半分を超えました！後半戦も全力で！',
+                '折り返し地点通過！引き続き頑張りましょう！',
+                '後半戦スタート！ラストスパートの準備を！',
+                '半分達成！残りも同じペースで進みましょう！',
+                '中間地点通過！ゴールまであと半分！'
+            ]);
+        } else if (rate >= 75 && rate < 90) {
+            // 75-89%: ラストスパート（橙）
+            progressTheme = 'sprint';
+            progressStatus = '🔥 ラストスパート！';
+            progressMessage = getRandomMessage([
+                'あと一息！ゴール間近です！',
+                'ラストスパート！全力で駆け抜けよう！',
+                '目標まであと少し！踏ん張りどころです！',
+                'ゴールが見えてきた！最後まで全力で！',
+                '残り僅か！チーム一丸となって突破しよう！'
+            ]);
+        } else if (rate >= 90 && rate < 100) {
+            // 90-99%: カウントダウン（赤）
+            progressTheme = 'countdown';
+            progressStatus = '⚡ カウントダウン';
+            progressMessage = getRandomMessage([
+                '💥 もうすぐ達成！全員で追い込み！',
+                'カウントダウン開始！あと少しで目標達成！',
+                '最後の追い込み！全力疾走でゴールへ！',
+                'ゴール直前！最後まで気を抜かずに！',
+                'あと僅か！全員の力を合わせて達成しよう！'
+            ]);
+        } else if (rate >= 100 && rate < 101) {
+            // 100%: 目標達成（紫）+ 花吹雪
+            progressTheme = 'achieved';
+            progressStatus = '🎉 目標達成！！！';
+            progressMessage = getRandomMessage([
+                '🌟 素晴らしいチームワークでした！',
+                '🏆 おめでとうございます！見事に達成！',
+                '🎊 目標クリア！皆さんのおかげです！',
+                '✨ 完璧な達成！チーム全員に拍手！',
+                '🌈 やりました！素晴らしい成果です！'
+            ]);
+            showConfetti = true;
+        } else if (rate >= 101 && rate < 110) {
+            // 101-109%: 目標超過（虹）
+            progressTheme = 'exceed';
+            progressStatus = '🚀 目標超過！';
+            exceedAmount = stats.total_licenses - 1000;
+            progressMessage = getRandomMessage([
+                '素晴らしい成果！目標を超えました！',
+                '期待以上の結果！チームの底力を見せました！',
+                '目標を上回る快挙！素晴らしい！',
+                '予想を超える成果！皆さんの努力が実りました！',
+                '目標突破！チームの結束力が勝利を呼びました！'
+            ]);
+            showConfetti = true;
+        } else if (rate >= 110 && rate < 120) {
+            // 110-119%: 大幅超過（金）
+            progressTheme = 'major-exceed';
+            progressStatus = '🏆 大幅目標超過！';
+            exceedAmount = stats.total_licenses - 1000;
+            progressMessage = getRandomMessage([
+                '圧倒的な成果！驚異的な達成率です！',
+                '大幅超過達成！チームの力は無限大！',
+                '想像を超える成果！歴史的快挙です！',
+                '記録的な達成！全員が主役です！',
+                '驚異的なパフォーマンス！素晴らしい！'
+            ]);
+            showConfetti = true;
+        } else {
+            // 120%+: 驚異的達成（虹アニメ）
+            progressTheme = 'legendary';
+            progressStatus = '👑 驚異的達成！';
+            exceedAmount = stats.total_licenses - 1000;
+            progressMessage = getRandomMessage([
+                '💎 記録的！歴史に残る偉業です！',
+                '伝説級の達成！チームの名が刻まれます！',
+                '前人未到の領域！圧巻のパフォーマンス！',
+                '奇跡的な成果！全員が英雄です！',
+                '史上最高の達成！チームの伝説が始まります！'
+            ]);
+            showConfetti = true;
+        }
+        
+        // グラデーション色の定義（9段階）
         const themeColors = {
-            'start': 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-            'normal': 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-            'halfway': 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-            'sprint': 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-            'countdown': 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-            'achieved': 'linear-gradient(135deg, #a855f7 0%, #9333ea 100%)',
-            'exceed': 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+            'start': 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',        // 青
+            'normal': 'linear-gradient(135deg, #10b981 0%, #059669 100%)',       // 緑
+            'halfway': 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',      // 黄
+            'sprint': 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',       // 橙
+            'countdown': 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',    // 赤
+            'achieved': 'linear-gradient(135deg, #a855f7 0%, #9333ea 100%)',     // 紫
+            'exceed': 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)',       // シアン（虹色）
+            'major-exceed': 'linear-gradient(135deg, #f59e0b 0%, #eab308 100%)', // 金
+            'legendary': 'linear-gradient(135deg, #ec4899 0%, #8b5cf6 50%, #06b6d4 100%)' // 虹アニメ
         };
         
+        const themeShadows = {
+            'start': '0 8px 16px rgba(59, 130, 246, 0.3)',
+            'normal': '0 8px 16px rgba(16, 185, 129, 0.3)',
+            'halfway': '0 8px 16px rgba(245, 158, 11, 0.3)',
+            'sprint': '0 8px 16px rgba(249, 115, 22, 0.3)',
+            'countdown': '0 8px 16px rgba(239, 68, 68, 0.3)',
+            'achieved': '0 8px 16px rgba(168, 85, 247, 0.3)',
+            'exceed': '0 8px 16px rgba(6, 182, 212, 0.3)',
+            'major-exceed': '0 8px 16px rgba(245, 158, 11, 0.4)',
+            'legendary': '0 8px 20px rgba(236, 72, 153, 0.5)'
+        };
+        
+        // 花吹雪アニメーションのCSS
+        const confettiStyles = showConfetti ? `
+            <style>
+                @keyframes confetti-fall {
+                    0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+                    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+                }
+                .confetti {
+                    position: fixed;
+                    width: 10px;
+                    height: 10px;
+                    background: #f0f;
+                    top: -10px;
+                    animation: confetti-fall 3s linear infinite;
+                    z-index: 9999;
+                }
+                @keyframes rainbow-animation {
+                    0% { background-position: 0% 50%; }
+                    50% { background-position: 100% 50%; }
+                    100% { background-position: 0% 50%; }
+                }
+                .rainbow-animated {
+                    background-size: 200% 200%;
+                    animation: rainbow-animation 3s ease infinite;
+                }
+            </style>
+        ` : '';
+        
+        // 花吹雪要素の生成
+        const confettiHtml = showConfetti ? Array.from({length: 30}, function(_, i) {
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffa500', '#ff69b4'];
+            const color = colors[i % colors.length];
+            const left = Math.random() * 100;
+            const delay = Math.random() * 3;
+            const duration = 3 + Math.random() * 2;
+            return '<div class="confetti" style="left: ' + left + '%; background: ' + color + '; animation-delay: ' + delay + 's; animation-duration: ' + duration + 's;"></div>';
+        }).join('') : '';
+        
         // Render modern dashboard HTML
-        let html = '<div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">';
+        let html = confettiStyles + confettiHtml + '<div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">';
         
         // Filter section
         html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #e2e8f0;">';
@@ -267,8 +405,16 @@ async function loadDashboard() {
         html += '</div>';
         
         // Main progress card
-        html += '<div style="background: ' + themeColors[progressTheme] + '; padding: 35px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); color: white;">';
+        const rainbowClass = progressTheme === 'legendary' ? ' rainbow-animated' : '';
+        html += '<div class="' + rainbowClass + '" style="background: ' + themeColors[progressTheme] + '; padding: 35px; border-radius: 15px; margin-bottom: 30px; box-shadow: ' + themeShadows[progressTheme] + '; color: white;">';
         html += '<div style="font-size: 28px; font-weight: bold; margin-bottom: 20px;">' + progressStatus + '</div>';
+        
+        // 目標超過の場合は特別表示
+        if (exceedAmount > 0) {
+            html += '<div style="font-size: 18px; font-weight: 600; margin-bottom: 15px; padding: 10px; background: rgba(255, 255, 255, 0.2); border-radius: 8px; text-align: center;">';
+            html += '🌟 目標超過: +' + exceedAmount + 'ライセンス 🌟';
+            html += '</div>';
+        }
         
         // Progress grid (2x2)
         html += '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px;">';
