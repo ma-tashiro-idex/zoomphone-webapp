@@ -447,26 +447,20 @@ async function loadDashboard() {
         const confirmedCount = deals.filter(d => d.status === '成約').length;
         html += '<div style="background: rgba(255, 255, 255, 0.2); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">';
         html += '<div style="font-size: 14px; opacity: 0.95; margin-bottom: 10px; font-weight: 600;">成約案件</div>';
-        html += '<div style="font-size: 32px; font-weight: bold; line-height: 1;">' + stats.confirmed_licenses + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">ライセンス</span>';
-        html += '<div style="font-size: 12px; opacity: 0.85; margin-top: 6px;">' + confirmedCount + '件</div>';
-        html += '</div>';
+        html += '<div style="font-size: 32px; font-weight: bold; line-height: 1;">' + stats.confirmed_licenses + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">ライセンス</span> <span style="font-size: 14px; opacity: 0.8;">(' + confirmedCount + '件)</span></div>';
         html += '</div>';
         
         // 5. 見込み案件
         const prospectCount = deals.filter(d => d.status === '見込み').length;
         html += '<div style="background: rgba(255, 255, 255, 0.2); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">';
         html += '<div style="font-size: 14px; opacity: 0.95; margin-bottom: 10px; font-weight: 600;">見込み案件</div>';
-        html += '<div style="font-size: 32px; font-weight: bold; line-height: 1;">' + stats.prospect_licenses + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">ライセンス</span>';
-        html += '<div style="font-size: 12px; opacity: 0.85; margin-top: 6px;">' + prospectCount + '件</div>';
-        html += '</div>';
+        html += '<div style="font-size: 32px; font-weight: bold; line-height: 1;">' + stats.prospect_licenses + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">ライセンス</span> <span style="font-size: 14px; opacity: 0.8;">(' + prospectCount + '件)</span></div>';
         html += '</div>';
         
         // 6. 成約＋見込み
         html += '<div style="background: rgba(255, 255, 255, 0.2); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">';
         html += '<div style="font-size: 14px; opacity: 0.95; margin-bottom: 10px; font-weight: 600;">成約＋見込み</div>';
-        html += '<div style="font-size: 32px; font-weight: bold; line-height: 1;">' + stats.total_licenses + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">ライセンス</span>';
-        html += '<div style="font-size: 12px; opacity: 0.85; margin-top: 6px;">' + deals.length + '件</div>';
-        html += '</div>';
+        html += '<div style="font-size: 32px; font-weight: bold; line-height: 1;">' + stats.total_licenses + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">ライセンス</span> <span style="font-size: 14px; opacity: 0.8;">(' + deals.length + '件)</span></div>';
         html += '</div>';
         
         html += '</div>';
