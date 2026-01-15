@@ -783,22 +783,22 @@ function renderDealItem(deal) {
     html += '<div style="display: flex; justify-content: space-between; align-items: center;">';
     html += '<div style="flex: 1;">';
     
-    // 1行目：顧客名＋日付を横並び
-    html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">';
-    html += '<div>';
+    // 1行目：顧客名＋バッジ＋日付を横並び（中央寄せ）
+    html += '<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">';
+    html += '<div style="display: flex; align-items: center; gap: 8px;">';
     html += '<span style="font-weight: 700; color: #2d3748; font-size: 18px;">' + deal.customer_name + '</span>';
-    html += '<span style="display: inline-block; background: ' + statusBg + '; color: ' + statusTextColor + '; padding: 3px 10px; border-radius: 12px; font-size: 12px; margin-left: 8px;">';
+    html += '<span style="display: inline-block; background: ' + statusBg + '; color: ' + statusTextColor + '; padding: 3px 10px; border-radius: 12px; font-size: 12px;">';
     html += deal.status;
     html += '</span>';
-    html += '<span style="display: inline-block; background: #e9d8fd; color: #553c9a; padding: 3px 10px; border-radius: 12px; font-size: 12px; margin-left: 6px;">';
+    html += '<span style="display: inline-block; background: #e9d8fd; color: #553c9a; padding: 3px 10px; border-radius: 12px; font-size: 12px;">';
     html += deal.sales_rep;
     html += '</span>';
     html += '</div>';
     
-    // 日付を右側に配置（大きめ）
-    html += '<div style="text-align: right;">';
-    html += '<div style="color: #718096; font-size: 10px; font-weight: 600;">' + dateLabel + '</div>';
-    html += '<div style="color: #2d3748; font-size: 15px; font-weight: 700;">📅 ' + dateValue + '</div>';
+    // 日付を少し間隔を開けて配置
+    html += '<div style="display: flex; align-items: center; gap: 6px; margin-left: 20px;">';
+    html += '<span style="color: #718096; font-size: 11px; font-weight: 600;">' + dateLabel + '</span>';
+    html += '<span style="color: #2d3748; font-size: 15px; font-weight: 700;">📅 ' + dateValue + '</span>';
     html += '</div>';
     html += '</div>';
     
