@@ -644,8 +644,27 @@ async function loadDashboard() {
         
         html += '</div>';
         
-        // Search and Filter Section
-        html += '<div style="background: white; padding: 20px; border-radius: 12px; margin-top: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">';
+        // Deals List with Add, Import, Export, Template Buttons
+        html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; margin-bottom: 15px;">';
+        html += '<h3 style="margin: 0; color: #2d3748;">💼 案件一覧</h3>';
+        html += '<div style="display: flex; gap: 10px; flex-wrap: wrap;">';
+        html += '<button onclick="downloadTemplate()" style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+        html += '📄 テンプレートDL';
+        html += '</button>';
+        html += '<button onclick="exportToCSV()" style="background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+        html += '📤 CSVエクスポート';
+        html += '</button>';
+        html += '<button onclick="showImportModal()" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+        html += '📥 インポート';
+        html += '</button>';
+        html += '<button onclick="showAddDealModal()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+        html += '➕ 新規追加';
+        html += '</button>';
+        html += '</div>';
+        html += '</div>';
+        
+        // Search and Filter Section (moved below the title)
+        html += '<div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">';
         html += '<h3 style="margin-top: 0; margin-bottom: 15px; color: #2d3748;">🔍 検索・フィルター</h3>';
         
         html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">';
@@ -676,15 +695,17 @@ async function loadDashboard() {
         html += '</select>';
         html += '</div>';
         
-        // Date range filter
+        // Sort order
         html += '<div>';
-        html += '<label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600; font-size: 14px;">登録日（開始）</label>';
-        html += '<input type="date" id="filterDateFrom" onchange="applyFilters()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">';
-        html += '</div>';
-        
-        html += '<div>';
-        html += '<label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600; font-size: 14px;">登録日（終了）</label>';
-        html += '<input type="date" id="filterDateTo" onchange="applyFilters()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">';
+        html += '<label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600; font-size: 14px;">並び替え</label>';
+        html += '<select id="sortOrder" onchange="applyFilters()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">';
+        html += '<option value="date_desc">日付が新しい順</option>';
+        html += '<option value="date_asc">日付が古い順</option>';
+        html += '<option value="licenses_desc">ライセンス数が多い順</option>';
+        html += '<option value="licenses_asc">ライセンス数が少ない順</option>';
+        html += '<option value="customer_asc">顧客名（昇順）</option>';
+        html += '<option value="customer_desc">顧客名（降順）</option>';
+        html += '</select>';
         html += '</div>';
         
         html += '</div>';
@@ -697,25 +718,6 @@ async function loadDashboard() {
         html += '</button>';
         html += '</div>';
         
-        html += '</div>';
-        
-        // Deals List with Add, Import, Export, Template Buttons
-        html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; margin-bottom: 15px;">';
-        html += '<h3 style="margin: 0; color: #2d3748;">💼 案件一覧</h3>';
-        html += '<div style="display: flex; gap: 10px; flex-wrap: wrap;">';
-        html += '<button onclick="downloadTemplate()" style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
-        html += '📄 テンプレートDL';
-        html += '</button>';
-        html += '<button onclick="exportToCSV()" style="background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
-        html += '📤 CSVエクスポート';
-        html += '</button>';
-        html += '<button onclick="showImportModal()" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
-        html += '📥 インポート';
-        html += '</button>';
-        html += '<button onclick="showAddDealModal()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
-        html += '➕ 新規追加';
-        html += '</button>';
-        html += '</div>';
         html += '</div>';
         
         html += '<div id="dealsList">';
@@ -2116,15 +2118,13 @@ window.applyFilters = function() {
     const searchText = document.getElementById('searchCustomer').value.toLowerCase().trim();
     const filterSalesRep = document.getElementById('filterSalesRep').value;
     const filterStatus = document.getElementById('filterStatus').value;
-    const filterDateFrom = document.getElementById('filterDateFrom').value;
-    const filterDateTo = document.getElementById('filterDateTo').value;
+    const sortOrder = document.getElementById('sortOrder').value;
     
     console.log('フィルター条件:', {
         searchText: searchText,
         salesRep: filterSalesRep,
         status: filterStatus,
-        dateFrom: filterDateFrom,
-        dateTo: filterDateTo
+        sortOrder: sortOrder
     });
     
     // Filter deals
@@ -2144,16 +2144,41 @@ window.applyFilters = function() {
             return false;
         }
         
-        // Filter by date range
-        if (filterDateFrom && deal.deal_date < filterDateFrom) {
-            return false;
-        }
-        
-        if (filterDateTo && deal.deal_date > filterDateTo) {
-            return false;
-        }
-        
         return true;
+    });
+    
+    // Sort deals
+    filteredDeals.sort(function(a, b) {
+        switch(sortOrder) {
+            case 'date_desc':
+                // 日付が新しい順（成約は成約日、見込みは更新日）
+                const dateA = a.status === '成約' && a.closed_date ? a.closed_date : a.updated_at || a.deal_date;
+                const dateB = b.status === '成約' && b.closed_date ? b.closed_date : b.updated_at || b.deal_date;
+                return dateB.localeCompare(dateA);
+            case 'date_asc':
+                // 日付が古い順
+                const dateA2 = a.status === '成約' && a.closed_date ? a.closed_date : a.updated_at || a.deal_date;
+                const dateB2 = b.status === '成約' && b.closed_date ? b.closed_date : b.updated_at || b.deal_date;
+                return dateA2.localeCompare(dateB2);
+            case 'licenses_desc':
+                // ライセンス数が多い順
+                const licensesA = a.licenses.reduce((sum, l) => sum + l.license_count, 0);
+                const licensesB = b.licenses.reduce((sum, l) => sum + l.license_count, 0);
+                return licensesB - licensesA;
+            case 'licenses_asc':
+                // ライセンス数が少ない順
+                const licensesA2 = a.licenses.reduce((sum, l) => sum + l.license_count, 0);
+                const licensesB2 = b.licenses.reduce((sum, l) => sum + l.license_count, 0);
+                return licensesA2 - licensesB2;
+            case 'customer_asc':
+                // 顧客名（昇順）
+                return a.customer_name.localeCompare(b.customer_name, 'ja');
+            case 'customer_desc':
+                // 顧客名（降順）
+                return b.customer_name.localeCompare(a.customer_name, 'ja');
+            default:
+                return 0;
+        }
     });
     
     console.log('✅ フィルター結果:', filteredDeals.length + '件 / 全' + allDeals.length + '件');
@@ -2173,8 +2198,7 @@ window.clearFilters = function() {
     document.getElementById('searchCustomer').value = '';
     document.getElementById('filterSalesRep').value = '';
     document.getElementById('filterStatus').value = '';
-    document.getElementById('filterDateFrom').value = '';
-    document.getElementById('filterDateTo').value = '';
+    document.getElementById('sortOrder').value = 'date_desc';
     
     // Show all deals
     updateDealsList(allDeals);
