@@ -804,7 +804,7 @@ function renderDealItem(deal) {
     
     // 2行目：ライセンス情報
     html += '<div style="display: flex; gap: 16px; color: #718096; font-size: 13px;">';
-    html += '<span>📦 合計: <strong style="color: #2d3748;">' + totalLicenses + 'ライセンス</strong></span>';
+    html += '<span>📞 合計: <strong style="color: #2d3748;">' + totalLicenses + 'ライセンス</strong></span>';
     html += '<span style="color: #a0aec0;">' + licenseDetails + '</span>';
     html += '</div>';
     
