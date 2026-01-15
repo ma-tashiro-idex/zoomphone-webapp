@@ -1134,6 +1134,45 @@ window.saveDeal = async function() {
             return;
         }
         
+        // 重複チェック：同じ顧客名が既に存在するか確認
+        console.log('🔍 重複チェック中...');
+        try {
+            const existingResponse = await apiCall(API_BASE + '/deals?customer=' + encodeURIComponent(customerName));
+            const existingDeals = existingResponse.data || [];
+            
+            if (existingDeals.length > 0) {
+                // 既存案件がある場合、確認ダイアログを表示
+                const existingDeal = existingDeals[0];
+                const existingLicenses = existingDeal.licenses || [];
+                const existingTotal = existingLicenses.reduce((sum, l) => sum + l.license_count, 0);
+                
+                const message = `⚠️ 同じ顧客名の案件が既に登録されています。\n\n` +
+                    `【既存案件】\n` +
+                    `顧客名: ${existingDeal.customer_name}\n` +
+                    `営業担当者: ${existingDeal.sales_rep}\n` +
+                    `ステータス: ${existingDeal.status}\n` +
+                    `合計ライセンス数: ${existingTotal}\n` +
+                    `登録日: ${new Date(existingDeal.deal_date).toLocaleDateString('ja-JP')}\n\n` +
+                    `どうしますか？\n\n` +
+                    `「OK」= 上書きして更新\n` +
+                    `「キャンセル」= 別案件として新規登録`;
+                
+                const shouldOverwrite = confirm(message);
+                
+                if (shouldOverwrite) {
+                    // 上書き：既存案件を更新
+                    console.log('📝 既存案件を上書き更新...');
+                    await updateExistingDeal(existingDeal.id, customerName, salesRep, status, closedDate, licenses);
+                    return;
+                }
+                // キャンセル = 新規登録として続行
+                console.log('📝 別案件として新規登録...');
+            }
+        } catch (error) {
+            console.error('⚠️ 重複チェックエラー:', error);
+            // 重複チェックエラーは無視して新規登録を続行
+        }
+        
         // Save to API
         console.log('📝 案件保存中...');
         const requestBody = {
@@ -1169,6 +1208,46 @@ window.saveDeal = async function() {
     } catch (error) {
         console.error('❌ 案件保存エラー:', error);
         alert('❌ 案件の保存に失敗しました: ' + error.message);
+    }
+}
+
+// 既存案件を更新する関数
+async function updateExistingDeal(dealId, customerName, salesRep, status, closedDate, licenses) {
+    try {
+        const requestBody = {
+            id: dealId,
+            customer_name: customerName,
+            sales_rep: salesRep,
+            status: status,
+            licenses: licenses
+        };
+        
+        // 成約の場合のみclosed_dateを追加
+        if (status === '成約' && closedDate) {
+            requestBody.closed_date = closedDate;
+        }
+        
+        await apiCall(API_BASE + '/deals/' + dealId, {
+            method: 'PUT',
+            body: JSON.stringify(requestBody)
+        });
+        
+        console.log('✅ 案件更新成功');
+        
+        // 成約の場合はおめでとうアニメーション
+        if (status === '成約') {
+            showCelebrationAnimation();
+        } else {
+            alert('✅ 案件を更新しました');
+        }
+        
+        // Close modal and reload dashboard
+        closeModal();
+        loadDashboard();
+        
+    } catch (error) {
+        console.error('❌ 案件更新エラー:', error);
+        alert('❌ 案件の更新に失敗しました: ' + error.message);
     }
 }
 

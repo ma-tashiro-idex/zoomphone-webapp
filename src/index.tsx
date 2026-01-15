@@ -150,12 +150,49 @@ app.use('/api/*', async (c, next) => {
 // API Routes
 
 /**
- * GET /api/deals - Get all deals
+ * GET /api/deals - Get all deals (with optional filters)
  */
 app.get('/api/deals', async (c) => {
   try {
     const fiscalYear = c.req.query('fiscalYear');
+    const customerName = c.req.query('customer');
     const year = fiscalYear ? parseInt(fiscalYear) : undefined;
+    
+    // 顧客名でフィルタリング
+    if (customerName) {
+      const deals = await c.env.DB.prepare(`
+        SELECT d.*, 
+               GROUP_CONCAT(l.license_type || '|' || l.license_count) as licenses_data
+        FROM deals d
+        LEFT JOIN licenses l ON d.id = l.deal_id
+        WHERE d.customer_name = ?
+        GROUP BY d.id
+        ORDER BY d.deal_date DESC
+      `).bind(customerName).all();
+      
+      // Parse licenses for each deal
+      const dealsWithLicenses = (deals.results || []).map(deal => {
+        const licenses = [];
+        if (deal.licenses_data) {
+          const licensesArray = deal.licenses_data.split(',');
+          for (const licenseStr of licensesArray) {
+            const [type, count] = licenseStr.split('|');
+            licenses.push({
+              license_type: type,
+              license_count: parseInt(count)
+            });
+          }
+        }
+        return {
+          ...deal,
+          licenses
+        };
+      });
+      
+      return c.json({ success: true, data: dealsWithLicenses });
+    }
+    
+    // 通常の年度別取得
     const deals = await getAllDeals(c.env.DB, year);
     return c.json({ success: true, data: deals });
   } catch (error) {
