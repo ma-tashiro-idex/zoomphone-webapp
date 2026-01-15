@@ -466,25 +466,31 @@ async function loadDashboard() {
         // Progress Bar（成約 + 薄く見込み）
         const confirmedWidth = Math.min(confirmedRate, 100);
         const totalWidth = Math.min(totalRate, 100);
-        html += '<div style="margin-bottom: 5px;">';
+        html += '<div style="margin-bottom: 20px;">';
         // バー部分
-        html += '<div class="progress-bar-container" style="background: rgba(255, 255, 255, 0.2); height: 30px; border-radius: 15px; overflow: hidden; position: relative; cursor: pointer;">';
+        html += '<div class="progress-bar-container" style="background: rgba(255, 255, 255, 0.2); height: 30px; border-radius: 15px; overflow: hidden; position: relative; cursor: pointer; margin-bottom: 5px;">';
         // 見込み含むバー（薄い背景層）
         html += '<div class="progress-bg-bar" style="position: absolute; height: 100%; background: rgba(255, 255, 255, 0.4); border-radius: 15px; width: ' + totalWidth + '%; transition: width 1s ease;"></div>';
         // 成約のみバー（濃い前景層）
         html += '<div class="progress-fg-bar" style="position: relative; height: 100%; background: rgba(255, 255, 255, 0.9); border-radius: 15px; width: ' + confirmedWidth + '%; transition: width 1s ease;"></div>';
         html += '</div>';
-        // テキスト部分（バーの下）- ホバー時のみ表示
-        html += '<div class="progress-text" style="display: flex; justify-content: space-between; padding: 8px 10px; font-size: 12px; color: white; opacity: 0; transition: opacity 0.3s;">';
-        html += '<div style="font-weight: 600;">' + stats.confirmed_licenses + '/1,000 (成約)</div>';
-        html += '<div style="font-weight: 600; opacity: 0.8;">' + stats.total_licenses + '/1,000 (成約＋見込み)</div>';
+        // テキスト部分（バーの下）- バーの先端位置に配置
+        html += '<div class="progress-text-container" style="position: relative; height: 20px; opacity: 0; transition: opacity 0.3s;">';
+        // 成約のテキスト（成約バーの先端下）
+        html += '<div class="progress-confirmed-text" style="position: absolute; left: ' + confirmedWidth + '%; transform: translateX(-50%); font-size: 12px; color: white; font-weight: 600; white-space: nowrap;">';
+        html += stats.confirmed_licenses + '/1,000 (成約)';
+        html += '</div>';
+        // 見込み含むのテキスト（見込みバーの先端下）
+        html += '<div class="progress-total-text" style="position: absolute; left: ' + totalWidth + '%; transform: translateX(-50%); font-size: 12px; color: white; font-weight: 600; opacity: 0.8; white-space: nowrap;">';
+        html += stats.total_licenses + '/1,000 (成約＋見込み)';
+        html += '</div>';
         html += '</div>';
         html += '</div>';
         
         // ホバー時にテキストを表示するスタイル
         html += '<style>';
-        html += '.progress-bar-container:hover + .progress-text { opacity: 1 !important; }';
-        html += '.progress-text:hover { opacity: 1 !important; }';
+        html += '.progress-bar-container:hover + .progress-text-container { opacity: 1 !important; }';
+        html += '.progress-text-container:hover { opacity: 1 !important; }';
         html += '</style>';
         
         // Motivation message
