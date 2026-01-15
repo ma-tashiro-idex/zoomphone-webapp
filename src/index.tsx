@@ -437,11 +437,6 @@ app.get('/', (c) => {
     
     <div id="mainContent" style="display: none;">
         <div class="container">
-            <header>
-                <h1 style="font-size: 36px; margin-bottom: 8px; font-weight: 700;">📞 ZoomPhone 目標達成管理システム v2.0</h1>
-                <p class="subtitle">セキュアなバックエンドAPI + Cloudflare D1データベース</p>
-            </header>
-            
             <div id="app">
                 <p style="text-align: center; padding: 50px; color: #718096;">
                     Loading...

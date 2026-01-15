@@ -402,10 +402,29 @@ async function loadDashboard() {
         // Render modern dashboard HTML
         let html = confettiStyles + confettiHtml;
         
-        // Header with user info (right aligned, small)
-        html += '<div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 15px;">';
-        html += '<div style="text-align: right; color: #718096; font-size: 12px;">';
-        html += '<div style="font-weight: 600;">ログイン中: ' + currentUserEmail + '</div>';
+        // Header: System name (center) + User info (right)
+        html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">';
+        
+        // Spacer for alignment
+        html += '<div style="flex: 1;"></div>';
+        
+        // System name (center)
+        html += '<div style="flex: 2; text-align: center;">';
+        html += '<h1 style="font-size: 36px; font-weight: 700; margin: 0; color: #1e293b;">📞 ZoomPhone 目標達成管理システム v2.0</h1>';
+        html += '</div>';
+        
+        // User info (right aligned, small)
+        html += '<div style="flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 10px;">';
+        html += '<div style="text-align: right; color: #64748b; font-size: 13px; font-weight: 600;">';
+        html += '<i class="fas fa-user-circle" style="margin-right: 4px;"></i>' + currentUserEmail;
+        
+        // テストモード表示
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('test') === 'true') {
+            html += '<span style="margin-left: 8px; color: #f59e0b; font-size: 11px;">(テストモード)</span>';
+        }
+        
+        html += '</div>';
         html += '</div>';
         html += '</div>';
         
@@ -755,6 +774,11 @@ async function loadDashboard() {
         }
         
         html += '</div>';
+        html += '</div>';
+        
+        // Footer: System info
+        html += '<div style="margin-top: 30px; text-align: center; color: #94a3b8; font-size: 12px;">';
+        html += 'セキュアなバックエンドAPI + Cloudflare D1データベース';
         html += '</div>';
         
         appContainer.innerHTML = html;
