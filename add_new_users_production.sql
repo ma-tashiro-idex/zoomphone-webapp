@@ -1,6 +1,10 @@
--- 本番環境用：新規許可ユーザーの追加
+-- 本番環境用：新規許可ユーザーの追加 & 既存ユーザーの削除
 -- 実行コマンド: npx wrangler d1 execute zoomphone-production --file=./add_new_users_production.sql
 
+-- 1. yu-tanaka@idex.co.jp を削除（is_active = 0 に設定）
+UPDATE users SET is_active = 0, updated_at = datetime('now') WHERE email = 'yu-tanaka@idex.co.jp';
+
+-- 2. 新規許可ユーザーを追加
 INSERT OR IGNORE INTO users (email, display_name, is_active, created_at, updated_at) VALUES
   ('k-murakami@idex.co.jp', '村上', 1, datetime('now'), datetime('now')),
   ('y-motoda@idex.co.jp', '元田', 1, datetime('now'), datetime('now')),
