@@ -1283,6 +1283,29 @@ window.editDeal = async function(dealId) {
         const deal = response.data;
         
         console.log('📄 案件データ取得:', deal);
+        console.log('🔍 closed_date:', deal.closed_date);
+        console.log('🔍 updated_at:', deal.updated_at);
+        
+        // 日付をYYYY-MM-DD形式に変換する関数
+        function formatDateForInput(dateString) {
+            if (!dateString) return '';
+            try {
+                const date = new Date(dateString);
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            } catch (e) {
+                console.error('日付変換エラー:', e);
+                return '';
+            }
+        }
+        
+        const closedDateFormatted = formatDateForInput(deal.closed_date);
+        const updatedDateFormatted = formatDateForInput(deal.updated_at);
+        
+        console.log('📅 フォーマット後 closed_date:', closedDateFormatted);
+        console.log('📅 フォーマット後 updated_at:', updatedDateFormatted);
         
         // 元のステータスを保存（グローバル変数）
         window.originalDealStatus = deal.status;
@@ -1317,12 +1340,12 @@ window.editDeal = async function(dealId) {
                     
                     <div id="closedDateContainer" style="margin-bottom: 20px; display: ${deal.status === '成約' ? 'block' : 'none'};">
                         <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600;">成約日 *</label>
-                        <input type="date" id="closedDate" value="${deal.closed_date ? deal.closed_date.split('T')[0] : ''}" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
+                        <input type="date" id="closedDate" value="${closedDateFormatted}" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
                     </div>
                     
                     <div id="updatedDateContainer" style="margin-bottom: 20px; display: ${deal.status === '見込み' ? 'block' : 'none'};">
                         <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600;">最終更新日</label>
-                        <input type="date" id="updatedDate" value="${deal.updated_at ? deal.updated_at.split('T')[0] : ''}" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
+                        <input type="date" id="updatedDate" value="${updatedDateFormatted}" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
                     </div>
                     
                     <div style="margin-bottom: 20px;">
