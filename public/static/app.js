@@ -31,6 +31,15 @@ let isTestMode = false;
 // Store all deals for filtering
 let allDeals = [];
 
+// フィルター状態を保存（グローバル）
+let savedFilterState = {
+    searchText: '',
+    salesRep: '',
+    status: '',
+    fiscalYear: '',
+    sortOrder: 'date_desc'
+};
+
 // API base URL
 const API_BASE = '/api';
 
@@ -722,17 +731,17 @@ async function loadDashboard() {
         // Search by customer name (moved to first position)
         html += '<div>';
         html += '<label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600; font-size: 14px;">顧客名検索</label>';
-        html += '<input type="text" id="searchCustomer" placeholder="顧客名を入力..." onkeyup="applyFilters()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; background: white;">';
+        html += '<input type="text" id="searchCustomer" placeholder="顧客名を入力..." value="' + savedFilterState.searchText + '" onkeyup="applyFilters()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; background: white;">';
         html += '</div>';
         
         // Fiscal Year Filter
         html += '<div>';
         html += '<label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600; font-size: 14px;">年度</label>';
         html += '<select id="filterFiscalYear" onchange="applyFilters()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; background: white;">';
-        html += '<option value="">すべて</option>';
-        html += '<option value="2026">2026年度</option>';
-        html += '<option value="2025">2025年度</option>';
-        html += '<option value="2024">2024年度</option>';
+        html += '<option value="" ' + (savedFilterState.fiscalYear === '' ? 'selected' : '') + '>すべて</option>';
+        html += '<option value="2026" ' + (savedFilterState.fiscalYear === '2026' ? 'selected' : '') + '>2026年度</option>';
+        html += '<option value="2025" ' + (savedFilterState.fiscalYear === '2025' ? 'selected' : '') + '>2025年度</option>';
+        html += '<option value="2024" ' + (savedFilterState.fiscalYear === '2024' ? 'selected' : '') + '>2024年度</option>';
         html += '</select>';
         html += '</div>';
         
@@ -740,12 +749,13 @@ async function loadDashboard() {
         html += '<div>';
         html += '<label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600; font-size: 14px;">営業担当者</label>';
         html += '<select id="filterSalesRep" onchange="applyFilters()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; background: white;">';
-        html += '<option value="">すべて</option>';
+        html += '<option value="" ' + (savedFilterState.salesRep === '' ? 'selected' : '') + '>すべて</option>';
         
         // 全担当者を動的に取得して選択肢に追加
         const allSalesReps = [...new Set(deals.map(d => d.sales_rep).filter(Boolean))].sort();
         allSalesReps.forEach(rep => {
-            html += `<option value="${rep}">${rep}</option>`;
+            const selected = savedFilterState.salesRep === rep ? 'selected' : '';
+            html += `<option value="${rep}" ${selected}>${rep}</option>`;
         });
         
         html += '</select>';
@@ -755,9 +765,9 @@ async function loadDashboard() {
         html += '<div>';
         html += '<label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600; font-size: 14px;">ステータス</label>';
         html += '<select id="filterStatus" onchange="applyFilters()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; background: white;">';
-        html += '<option value="">すべて</option>';
-        html += '<option value="見込み">見込み</option>';
-        html += '<option value="成約">成約</option>';
+        html += '<option value="" ' + (savedFilterState.status === '' ? 'selected' : '') + '>すべて</option>';
+        html += '<option value="見込み" ' + (savedFilterState.status === '見込み' ? 'selected' : '') + '>見込み</option>';
+        html += '<option value="成約" ' + (savedFilterState.status === '成約' ? 'selected' : '') + '>成約</option>';
         html += '</select>';
         html += '</div>';
         
@@ -765,12 +775,12 @@ async function loadDashboard() {
         html += '<div>';
         html += '<label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600; font-size: 14px;">並び替え</label>';
         html += '<select id="sortOrder" onchange="applyFilters()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; background: white;">';
-        html += '<option value="date_desc">日付が新しい順</option>';
-        html += '<option value="date_asc">日付が古い順</option>';
-        html += '<option value="licenses_desc">ライセンス数が多い順</option>';
-        html += '<option value="licenses_asc">ライセンス数が少ない順</option>';
-        html += '<option value="customer_asc">顧客名（昇順）</option>';
-        html += '<option value="customer_desc">顧客名（降順）</option>';
+        html += '<option value="date_desc" ' + (savedFilterState.sortOrder === 'date_desc' ? 'selected' : '') + '>日付が新しい順</option>';
+        html += '<option value="date_asc" ' + (savedFilterState.sortOrder === 'date_asc' ? 'selected' : '') + '>日付が古い順</option>';
+        html += '<option value="licenses_desc" ' + (savedFilterState.sortOrder === 'licenses_desc' ? 'selected' : '') + '>ライセンス数が多い順</option>';
+        html += '<option value="licenses_asc" ' + (savedFilterState.sortOrder === 'licenses_asc' ? 'selected' : '') + '>ライセンス数が少ない順</option>';
+        html += '<option value="customer_asc" ' + (savedFilterState.sortOrder === 'customer_asc' ? 'selected' : '') + '>顧客名（昇順）</option>';
+        html += '<option value="customer_desc" ' + (savedFilterState.sortOrder === 'customer_desc' ? 'selected' : '') + '>顧客名（降順）</option>';
         html += '</select>';
         html += '</div>';
         
@@ -2464,13 +2474,16 @@ window.applyFilters = function() {
     const filterFiscalYear = document.getElementById('filterFiscalYear').value;
     const sortOrder = document.getElementById('sortOrder').value;
     
-    console.log('フィルター条件:', {
+    // フィルター状態を保存
+    savedFilterState = {
         searchText: searchText,
         salesRep: filterSalesRep,
         status: filterStatus,
         fiscalYear: filterFiscalYear,
         sortOrder: sortOrder
-    });
+    };
+    
+    console.log('フィルター条件:', savedFilterState);
     
     // Filter deals
     let filteredDeals = allDeals.filter(function(deal) {
@@ -2559,6 +2572,15 @@ window.applyFilters = function() {
 // Clear filters
 window.clearFilters = function() {
     console.log('🔄 フィルタークリア');
+    
+    // フィルター状態をリセット
+    savedFilterState = {
+        searchText: '',
+        salesRep: '',
+        status: '',
+        fiscalYear: '',
+        sortOrder: 'date_desc'
+    };
     
     // Clear input values
     document.getElementById('searchCustomer').value = '';
