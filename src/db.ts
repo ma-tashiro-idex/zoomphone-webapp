@@ -2,12 +2,34 @@
 import type { Deal, License, DealWithLicenses, DealCreateInput, DealUpdateInput, DashboardStats, Env } from './types';
 
 /**
+ * 年度フィルタリング用のヘルパー関数
+ * 日本の会計年度（4月始まり）でフィルタ
+ */
+function filterByFiscalYear(deals: DealWithLicenses[], fiscalYear: number): DealWithLicenses[] {
+  const fiscalStartDate = `${fiscalYear}-04-01`;
+  const fiscalEndDate = `${fiscalYear + 1}-03-31`;
+  
+  return deals.filter(deal => {
+    // 成約案件: closed_dateで判定
+    if (deal.status === '成約' && deal.closed_date) {
+      return deal.closed_date >= fiscalStartDate && deal.closed_date <= fiscalEndDate;
+    }
+    // 見込み案件: updated_atで判定
+    if (deal.status === '見込み') {
+      const updatedDate = deal.updated_at.split('T')[0]; // YYYY-MM-DD形式に変換
+      return updatedDate >= fiscalStartDate && updatedDate <= fiscalEndDate;
+    }
+    return false;
+  });
+}
+
+/**
  * Get all deals with their licenses
  */
-export async function getAllDeals(db: D1Database): Promise<DealWithLicenses[]> {
+export async function getAllDeals(db: D1Database, fiscalYear?: number): Promise<DealWithLicenses[]> {
   // Get all deals
   const dealsResult = await db.prepare(`
-    SELECT * FROM deals ORDER BY deal_date DESC
+    SELECT * FROM deals ORDER BY updated_at DESC
   `).all<Deal>();
 
   if (!dealsResult.results || dealsResult.results.length === 0) {
@@ -20,10 +42,15 @@ export async function getAllDeals(db: D1Database): Promise<DealWithLicenses[]> {
   `).all<License>();
 
   // Combine deals with their licenses
-  const dealsWithLicenses: DealWithLicenses[] = dealsResult.results.map(deal => ({
+  let dealsWithLicenses: DealWithLicenses[] = dealsResult.results.map(deal => ({
     ...deal,
     licenses: licensesResult.results?.filter(l => l.deal_id === deal.id) || []
   }));
+
+  // Apply fiscal year filter if specified
+  if (fiscalYear) {
+    dealsWithLicenses = filterByFiscalYear(dealsWithLicenses, fiscalYear);
+  }
 
   return dealsWithLicenses;
 }
@@ -62,14 +89,14 @@ export async function createDeal(db: D1Database, input: DealCreateInput): Promis
 
   // Insert deal
   const dealResult = await db.prepare(`
-    INSERT INTO deals (customer_name, sales_rep, deal_date, status, source)
+    INSERT INTO deals (customer_name, sales_rep, status, closed_date, source)
     VALUES (?, ?, ?, ?, ?)
     RETURNING *
   `).bind(
     input.customer_name,
     input.sales_rep,
-    input.deal_date,
     input.status,
+    input.closed_date || null,
     input.source || 'manual'
   ).first<Deal>();
 
@@ -108,14 +135,14 @@ export async function updateDeal(db: D1Database, input: DealUpdateInput): Promis
   // Update deal
   const dealResult = await db.prepare(`
     UPDATE deals 
-    SET customer_name = ?, sales_rep = ?, deal_date = ?, status = ?, updated_at = datetime('now')
+    SET customer_name = ?, sales_rep = ?, status = ?, closed_date = ?, updated_at = datetime('now')
     WHERE id = ?
     RETURNING *
   `).bind(
     input.customer_name,
     input.sales_rep,
-    input.deal_date,
     input.status,
+    input.closed_date || null,
     input.id
   ).first<Deal>();
 
@@ -166,8 +193,8 @@ export async function deleteDeal(db: D1Database, customerName: string): Promise<
 /**
  * Get dashboard statistics
  */
-export async function getDashboardStats(db: D1Database, filter?: '見込み' | '成約'): Promise<DashboardStats> {
-  const deals = await getAllDeals(db);
+export async function getDashboardStats(db: D1Database, fiscalYear?: number, filter?: '見込み' | '成約'): Promise<DashboardStats> {
+  const deals = await getAllDeals(db, fiscalYear);
 
   let filteredDeals = deals;
   if (filter) {

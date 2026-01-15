@@ -154,7 +154,9 @@ app.use('/api/*', async (c, next) => {
  */
 app.get('/api/deals', async (c) => {
   try {
-    const deals = await getAllDeals(c.env.DB);
+    const fiscalYear = c.req.query('fiscalYear');
+    const year = fiscalYear ? parseInt(fiscalYear) : undefined;
+    const deals = await getAllDeals(c.env.DB, year);
     return c.json({ success: true, data: deals });
   } catch (error) {
     console.error('Error fetching deals:', error);
@@ -339,7 +341,9 @@ app.delete('/api/deals/:customerName', async (c) => {
 app.get('/api/stats', async (c) => {
   try {
     const filter = c.req.query('filter') as '見込み' | '成約' | undefined;
-    const stats = await getDashboardStats(c.env.DB, filter);
+    const fiscalYear = c.req.query('fiscal_year');
+    const year = fiscalYear ? parseInt(fiscalYear) : undefined;
+    const stats = await getDashboardStats(c.env.DB, filter, year);
     return c.json({ success: true, data: stats });
   } catch (error) {
     console.error('Error fetching stats:', error);

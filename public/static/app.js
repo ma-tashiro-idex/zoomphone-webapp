@@ -192,8 +192,19 @@ async function loadDashboard() {
     const appContainer = document.getElementById('app');
     
     try {
-        // Fetch stats
-        const statsResponse = await apiCall(API_BASE + '/stats');
+        // Get fiscal year from selector or use current fiscal year
+        let fiscalYear = window.selectedFiscalYear;
+        if (!fiscalYear) {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth() + 1; // 1-12
+            fiscalYear = currentMonth >= 4 ? currentYear : currentYear - 1;
+            window.selectedFiscalYear = fiscalYear;
+        }
+        
+        // Fetch stats with fiscal year
+        const statsUrl = API_BASE + '/stats?fiscal_year=' + fiscalYear;
+        const statsResponse = await apiCall(statsUrl);
         const stats = statsResponse.data;
         
         // Fetch deals
@@ -391,9 +402,32 @@ async function loadDashboard() {
         // Render modern dashboard HTML
         let html = confettiStyles + confettiHtml + '<div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">';
         
-        // Header
-        html += '<div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #e2e8f0;">';
+        // Header with Fiscal Year selector
+        html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #e2e8f0;">';
         html += '<h2 style="color: #0284c7; font-size: 24px; margin: 0;">📈 進捗ダッシュボード</h2>';
+        
+        // 年度選択ドロップダウン
+        html += '<div style="display: flex; gap: 10px; align-items: center;">';
+        html += '<span style="font-weight: 600; color: #475569; font-size: 14px;">年度：</span>';
+        html += '<select id="fiscalYearSelect" onchange="changeFiscalYear()" style="padding: 10px 20px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-weight: 600; background: white; cursor: pointer;">';
+        
+        // 現在の年度を計算（4月始まり）
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth() + 1; // 1-12
+        const currentFiscalYear = currentMonth >= 4 ? currentYear : currentYear - 1;
+        
+        // Use selected fiscal year or current fiscal year
+        const selectedYear = fiscalYear || currentFiscalYear;
+        
+        // 過去3年分の年度を表示
+        for (let year = currentFiscalYear; year >= currentFiscalYear - 3; year--) {
+            const selected = year === selectedYear ? ' selected' : '';
+            html += '<option value="' + year + '"' + selected + '>' + year + '年度</option>';
+        }
+        
+        html += '</select>';
+        html += '</div>';
         html += '</div>';
         
         // Main progress card
@@ -508,8 +542,23 @@ async function loadDashboard() {
         html += '</h3>';
         
         // 営業担当者別の集計
+        // First filter deals by fiscal year
+        const fiscalYearStart = new Date(fiscalYear, 3, 1); // April 1st
+        const fiscalYearEnd = new Date(fiscalYear + 1, 2, 31, 23, 59, 59); // March 31st next year
+        
+        const filteredDeals = deals.filter(deal => {
+            if (deal.status === '成約' && deal.closed_date) {
+                const closedDate = new Date(deal.closed_date);
+                return closedDate >= fiscalYearStart && closedDate <= fiscalYearEnd;
+            } else if (deal.status === '見込み' && deal.updated_at) {
+                const updatedDate = new Date(deal.updated_at);
+                return updatedDate >= fiscalYearStart && updatedDate <= fiscalYearEnd;
+            }
+            return false;
+        });
+        
         const salesStats = {};
-        deals.forEach(deal => {
+        filteredDeals.forEach(deal => {
             const rep = deal.sales_rep;
             if (!salesStats[rep]) {
                 salesStats[rep] = {
@@ -1954,6 +2003,21 @@ function downloadCSVFile(csvContent, filename) {
 // ===== Search & Filter Functions =====
 
 // Change display mode (all/confirmed/prospect)
+// 年度変更
+window.changeFiscalYear = async function() {
+    const fiscalYear = document.getElementById('fiscalYearSelect').value;
+    console.log('📅 年度変更:', fiscalYear + '年度');
+    
+    try {
+        // Store fiscal year in global variable
+        window.selectedFiscalYear = parseInt(fiscalYear);
+        // ダッシュボードをリロード
+        await loadDashboard();
+    } catch (error) {
+        console.error('❌ 年度変更エラー:', error);
+    }
+};
+
 window.changeDisplayMode = async function() {
     const mode = document.getElementById('displayMode').value;
     console.log('🔄 表示モード変更:', mode);

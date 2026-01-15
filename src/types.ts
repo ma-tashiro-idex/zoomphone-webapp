@@ -17,11 +17,11 @@ export interface Deal {
   id: number;
   customer_name: string;
   sales_rep: string;
-  deal_date: string;
   status: DealStatus;
   source: DealSource;
+  closed_date: string | null;  // 成約日（成約案件のみ）
   created_at: string;
-  updated_at: string;
+  updated_at: string;  // 最終更新日（見込み案件の集計に使用）
 }
 
 export interface License {
@@ -39,8 +39,8 @@ export interface DealWithLicenses extends Deal {
 export interface DealCreateInput {
   customer_name: string;
   sales_rep: string;
-  deal_date: string;
   status: DealStatus;
+  closed_date?: string;  // 成約日（成約案件の場合は必須）
   source?: DealSource;
   licenses: {
     license_type: LicenseType;
