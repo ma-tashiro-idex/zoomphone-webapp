@@ -467,17 +467,22 @@ async function loadDashboard() {
         const confirmedWidth = Math.min(confirmedRate, 100);
         const totalWidth = Math.min(totalRate, 100);
         html += '<div style="margin-bottom: 20px;">';
-        html += '<div style="background: rgba(255, 255, 255, 0.2); height: 30px; border-radius: 15px; overflow: hidden; position: relative;">';
-        // 見込み含むバー（薄い背景層）- テキストを左側に表示
-        html += '<div style="position: absolute; height: 100%; background: rgba(255, 255, 255, 0.4); border-radius: 15px; width: ' + totalWidth + '%; display: flex; align-items: center; padding-left: 15px; font-weight: 600; color: #1e40af; font-size: 12px; opacity: 0.8; transition: width 1s ease;">';
-        html += stats.total_licenses + '/1,000 (成約＋見込み)';
+        html += '<div style="background: rgba(255, 255, 255, 0.2); height: 30px; border-radius: 15px; overflow: hidden; position: relative; cursor: pointer;">';
+        // 見込み含むバー（薄い背景層）- ホバー時のみ表示・右寄せ
+        html += '<div class="progress-bg-bar" style="position: absolute; height: 100%; background: rgba(255, 255, 255, 0.4); border-radius: 15px; width: ' + totalWidth + '%; display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; font-weight: 600; color: #1e40af; font-size: 12px; transition: width 1s ease;">';
+        html += '<span style="opacity: 0; transition: opacity 0.3s;">' + stats.total_licenses + '/1,000 (成約＋見込み)</span>';
         html += '</div>';
-        // 成約のみバー（濃い前景層）- テキストを右側に表示
-        html += '<div style="position: relative; height: 100%; background: rgba(255, 255, 255, 0.9); border-radius: 15px; width: ' + confirmedWidth + '%; display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; font-weight: bold; color: #1e40af; font-size: 14px; transition: width 1s ease;">';
-        html += stats.confirmed_licenses + '/1,000 (成約)';
+        // 成約のみバー（濃い前景層）- ホバー時のみ表示・右寄せ
+        html += '<div class="progress-fg-bar" style="position: relative; height: 100%; background: rgba(255, 255, 255, 0.9); border-radius: 15px; width: ' + confirmedWidth + '%; display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; font-weight: bold; color: #1e40af; font-size: 14px; transition: width 1s ease;">';
+        html += '<span style="opacity: 0; transition: opacity 0.3s;">' + stats.confirmed_licenses + '/1,000 (成約)</span>';
         html += '</div>';
         html += '</div>';
         html += '</div>';
+        
+        // ホバー時にテキストを表示するスタイル
+        html += '<style>';
+        html += '.progress-bg-bar:hover span, .progress-fg-bar:hover span { opacity: 1 !important; }';
+        html += '</style>';
         
         // Motivation message
         html += '<div style="font-size: 18px; font-weight: 600; text-align: center; padding: 15px; background: rgba(255, 255, 255, 0.15); border-radius: 10px; backdrop-filter: blur(10px);">';
