@@ -438,9 +438,8 @@ app.get('/', (c) => {
     <div id="mainContent" style="display: none;">
         <div class="container">
             <header>
-                <h1>📞 ZoomPhone 目標達成管理システム v2.0</h1>
+                <h1 style="font-size: 36px; margin-bottom: 8px;">📞 ZoomPhone 目標達成管理システム v2.0</h1>
                 <p class="subtitle">セキュアなバックエンドAPI + Cloudflare D1データベース</p>
-                <div class="kpi-banner">🎯 2025年度 構造改革指標(KPI): 年間1,000ライセンス成約</div>
             </header>
             
             <div id="app">
