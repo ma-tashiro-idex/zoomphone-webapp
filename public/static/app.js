@@ -1151,7 +1151,13 @@ window.saveDeal = async function() {
         });
         
         console.log('✅ 案件保存成功');
-        alert('✅ 案件を追加しました');
+        
+        // 成約の場合はおめでとうアニメーション
+        if (status === '成約') {
+            showCelebrationAnimation();
+        } else {
+            alert('✅ 案件を追加しました');
+        }
         
         // Close modal and reload dashboard
         closeModal();
@@ -1173,6 +1179,9 @@ window.editDeal = async function(dealId) {
         const deal = response.data;
         
         console.log('📄 案件データ取得:', deal);
+        
+        // 元のステータスを保存（グローバル変数）
+        window.originalDealStatus = deal.status;
         
         // Show edit modal (similar to add modal but with pre-filled data)
         const modalHtml = `
@@ -1304,7 +1313,19 @@ window.updateDeal = async function(dealId) {
         });
         
         console.log('✅ 案件更新成功');
-        alert('✅ 案件を更新しました');
+        
+        // 見込み→成約の変更の場合はおめでとうアニメーション
+        const wasProspect = window.originalDealStatus === '見込み';
+        const nowConfirmed = status === '成約';
+        
+        if (wasProspect && nowConfirmed) {
+            showCelebrationAnimation();
+        } else if (status === '成約') {
+            // すでに成約だった場合は通常のアラート
+            alert('✅ 案件を更新しました');
+        } else {
+            alert('✅ 案件を更新しました');
+        }
         
         // Close modal and reload dashboard
         closeModal();
@@ -2369,3 +2390,119 @@ function updateDealsList(deals) {
     
     dealsListContainer.innerHTML = html;
 }
+
+// おめでとうアニメーション
+function showCelebrationAnimation() {
+    // オーバーレイを作成
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 10000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        animation: fadeIn 0.3s ease;
+    `;
+    
+    // メッセージカードを作成
+    const card = document.createElement('div');
+    card.style.cssText = `
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 50px;
+        border-radius: 20px;
+        text-align: center;
+        color: white;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        max-width: 500px;
+    `;
+    
+    card.innerHTML = `
+        <div style="font-size: 80px; margin-bottom: 20px; animation: rotate 1s ease;">🎉</div>
+        <h2 style="font-size: 32px; margin: 0 0 10px 0; font-weight: 700;">おめでとうございます！</h2>
+        <p style="font-size: 20px; margin: 0 0 30px 0; opacity: 0.9;">成約が完了しました！</p>
+        <button onclick="this.parentElement.parentElement.remove()" style="
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+            閉じる
+        </button>
+    `;
+    
+    overlay.appendChild(card);
+    
+    // 紙吹雪アニメーション
+    for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffa500', '#ff69b4'];
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const left = Math.random() * 100;
+        const delay = Math.random() * 1;
+        const duration = 2 + Math.random() * 2;
+        const size = 5 + Math.random() * 10;
+        
+        confetti.style.cssText = `
+            position: fixed;
+            width: ${size}px;
+            height: ${size}px;
+            background: ${color};
+            top: -20px;
+            left: ${left}%;
+            animation: confettiFall ${duration}s linear ${delay}s;
+            border-radius: ${Math.random() > 0.5 ? '50%' : '0'};
+            z-index: 10001;
+        `;
+        
+        overlay.appendChild(confetti);
+        
+        // アニメーション終了後に削除
+        setTimeout(() => confetti.remove(), (duration + delay) * 1000);
+    }
+    
+    // アニメーション用CSS
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes rotate {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-15deg); }
+            75% { transform: rotate(15deg); }
+        }
+        @keyframes confettiFall {
+            0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    document.body.appendChild(overlay);
+    
+    // 3秒後に自動で閉じる
+    setTimeout(() => {
+        if (overlay.parentElement) {
+            overlay.remove();
+        }
+    }, 3000);
+}
+
