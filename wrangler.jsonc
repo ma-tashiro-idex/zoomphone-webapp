@@ -8,12 +8,12 @@
   ],
   // D1 Database for ZoomPhone data
   // Note: Local development uses --local flag (auto-creates SQLite DB)
-  // Production: Create with `wrangler d1 create zoomphone-db`
+  // Production database created: 2026-01-15
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "zoomphone-db",
-      "database_id": "placeholder-will-be-replaced-after-creation"
+      "database_name": "zoomphone-production",
+      "database_id": "f7f50f2c-ebd5-4345-af09-9915b33c0b5e"
     }
   ]
 }
