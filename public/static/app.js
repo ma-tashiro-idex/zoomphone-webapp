@@ -739,8 +739,13 @@ async function loadDashboard() {
         html += '<label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600; font-size: 14px;">営業担当者</label>';
         html += '<select id="filterSalesRep" onchange="applyFilters()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; background: white;">';
         html += '<option value="">すべて</option>';
-        html += '<option value="山田">山田</option>';
-        html += '<option value="阿部">阿部</option>';
+        
+        // 全担当者を動的に取得して選択肢に追加
+        const allSalesReps = [...new Set(deals.map(d => d.sales_rep).filter(Boolean))].sort();
+        allSalesReps.forEach(rep => {
+            html += `<option value="${rep}">${rep}</option>`;
+        });
+        
         html += '</select>';
         html += '</div>';
         
@@ -989,11 +994,11 @@ window.showAddDealModal = function() {
                 
                 <div style="margin-bottom: 20px;">
                     <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600;">営業担当者 *</label>
-                    <select id="salesRep" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
-                        <option value="">選択してください</option>
-                        <option value="山田">山田</option>
-                        <option value="阿部">阿部</option>
-                    </select>
+                    <input list="salesRepList" id="salesRep" placeholder="入力または選択してください" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
+                    <datalist id="salesRepList">
+                        <option value="阿部">
+                        <option value="山田">
+                    </datalist>
                 </div>
                 
                 <div style="margin-bottom: 20px;">
@@ -1278,10 +1283,11 @@ window.editDeal = async function(dealId) {
                     
                     <div style="margin-bottom: 20px;">
                         <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600;">営業担当者 *</label>
-                        <select id="salesRep" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
-                            <option value="山田" ${deal.sales_rep === '山田' ? 'selected' : ''}>山田</option>
-                            <option value="阿部" ${deal.sales_rep === '阿部' ? 'selected' : ''}>阿部</option>
-                        </select>
+                        <input list="salesRepListEdit" id="salesRep" value="${deal.sales_rep}" placeholder="入力または選択してください" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
+                        <datalist id="salesRepListEdit">
+                            <option value="阿部">
+                            <option value="山田">
+                        </datalist>
                     </div>
                     
                     <div style="margin-bottom: 20px;">
