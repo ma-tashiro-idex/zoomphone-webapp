@@ -1,11 +1,11 @@
--- 本番環境用：正しい19名のユーザーリストに更新
+-- 本番環境用：正しい20名のユーザーリストに更新
 -- 実行コマンド: npx wrangler d1 execute zoomphone-production --file=./update_users_production_final.sql
 
--- 正しい19名のユーザーリストに更新
+-- 正しい20名のユーザーリストに更新
 -- まず全ユーザーを無効化
 UPDATE users SET is_active = 0, updated_at = datetime('now');
 
--- 正しい19名のみを有効化（存在しない場合は追加）
+-- 正しい20名のみを有効化（存在しない場合は追加）
 INSERT OR REPLACE INTO users (email, display_name, is_active, created_at, updated_at) VALUES
   ('hi-abe@idex.co.jp', '阿部', 1, datetime('now'), datetime('now')),
   ('k-murakami@idex.co.jp', '村上', 1, datetime('now'), datetime('now')),
@@ -24,6 +24,7 @@ INSERT OR REPLACE INTO users (email, display_name, is_active, created_at, update
   ('s-yamada@idex.co.jp', '山田', 1, datetime('now'), datetime('now')),
   ('t-iwanaga@idex.co.jp', '岩永', 1, datetime('now'), datetime('now')),
   ('t-kusumoto@idex.co.jp', '楠本', 1, datetime('now'), datetime('now')),
+  ('t-suetsugu@idex.co.jp', '末次', 1, datetime('now'), datetime('now')),
   ('y-hara@idex.co.jp', '原', 1, datetime('now'), datetime('now')),
   ('y-motoda@idex.co.jp', '元田', 1, datetime('now'), datetime('now'));
 
