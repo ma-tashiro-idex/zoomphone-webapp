@@ -81,16 +81,12 @@ export async function getDealByCustomerName(db: D1Database, customerName: string
  * Create a new deal with licenses
  */
 export async function createDeal(db: D1Database, input: DealCreateInput): Promise<DealWithLicenses> {
-  // Check if customer already exists
-  const existing = await getDealByCustomerName(db, input.customer_name);
-  if (existing) {
-    throw new Error(`顧客「${input.customer_name}」は既に登録されています`);
-  }
+  // Note: 同じ顧客名で複数の案件を登録できるように、重複チェックを削除
 
-  // Insert deal
+  // Insert deal with deal_date (登録日)
   const dealResult = await db.prepare(`
-    INSERT INTO deals (customer_name, sales_rep, status, closed_date, source)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO deals (customer_name, sales_rep, status, closed_date, deal_date, source)
+    VALUES (?, ?, ?, ?, datetime('now'), ?)
     RETURNING *
   `).bind(
     input.customer_name,
