@@ -575,20 +575,20 @@ async function loadDashboard() {
         } else {
             // バー部分
             html += '<div class="progress-bar-container" style="background: rgba(255, 255, 255, 0.2); height: 30px; border-radius: 15px; overflow: hidden; position: relative; cursor: pointer; margin-bottom: 5px;">';
-            // 見込み含むバー（薄い背景層）
-            html += '<div class="progress-bg-bar" style="position: absolute; height: 100%; background: rgba(255, 255, 255, 0.4); border-radius: 15px; width: ' + totalWidth + '%; transition: width 1s ease;"></div>';
-            // 成約のみバー（濃い前景層）
-            html += '<div class="progress-fg-bar" style="position: relative; height: 100%; background: rgba(255, 255, 255, 0.9); border-radius: 15px; width: ' + confirmedWidth + '%; transition: width 1s ease;"></div>';
+            // 見込み含むバー（薄い背景層）- 初期値0%、JavaScriptでアニメーション
+            html += '<div class="progress-bg-bar" style="position: absolute; height: 100%; background: rgba(255, 255, 255, 0.4); border-radius: 15px; width: 0%; transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);" data-target-width="' + totalWidth + '"></div>';
+            // 成約のみバー（濃い前景層）- 初期値0%、JavaScriptでアニメーション
+            html += '<div class="progress-fg-bar" style="position: relative; height: 100%; background: rgba(255, 255, 255, 0.9); border-radius: 15px; width: 0%; transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);" data-target-width="' + confirmedWidth + '"></div>';
             html += '</div>';
             // テキスト部分（バーの下）- バーの先端位置に配置
             html += '<div class="progress-text-container" style="position: relative; height: 20px; opacity: 0; transition: opacity 0.3s;">';
-            // 成約のテキスト（成約バーの先端下）
-            html += '<div class="progress-confirmed-text" style="position: absolute; left: ' + confirmedWidth + '%; transform: translateX(-50%); font-size: 12px; color: white; font-weight: 600; white-space: nowrap;">';
-            html += stats.confirmed_licenses + '/' + targetDisplay + ' (成約)';
+            // 成約のテキスト（成約バーの先端下）- 初期値0
+            html += '<div class="progress-confirmed-text" style="position: absolute; left: ' + confirmedWidth + '%; transform: translateX(-50%); font-size: 12px; color: white; font-weight: 600; white-space: nowrap;" data-target="' + stats.confirmed_licenses + '" data-target-display="' + targetDisplay + '">';
+            html += '0/' + targetDisplay + ' (成約)';
             html += '</div>';
-            // 見込み含むのテキスト（見込みバーの先端下）
-            html += '<div class="progress-total-text" style="position: absolute; left: ' + totalWidth + '%; transform: translateX(-50%); font-size: 12px; color: white; font-weight: 600; opacity: 0.8; white-space: nowrap;">';
-            html += stats.total_licenses + '/' + targetDisplay + ' (成約＋見込み)';
+            // 見込み含むのテキスト（見込みバーの先端下）- 初期値0
+            html += '<div class="progress-total-text" style="position: absolute; left: ' + totalWidth + '%; transform: translateX(-50%); font-size: 12px; color: white; font-weight: 600; opacity: 0.8; white-space: nowrap;" data-target="' + stats.total_licenses + '" data-target-display="' + targetDisplay + '">';
+            html += '0/' + targetDisplay + ' (成約＋見込み)';
             html += '</div>';
             html += '</div>';
         }
@@ -598,6 +598,13 @@ async function loadDashboard() {
         html += '<style>';
         html += '.progress-bar-container:hover + .progress-text-container { opacity: 1 !important; }';
         html += '.progress-text-container:hover { opacity: 1 !important; }';
+        
+        // 目標達成時のパルスアニメーション
+        if (rate >= 100) {
+            html += '@keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 15px rgba(255, 255, 255, 0.5); } 50% { box-shadow: 0 0 30px rgba(255, 255, 255, 0.9), 0 0 50px rgba(255, 255, 255, 0.6); } }';
+            html += '.progress-fg-bar { animation: pulse-glow 2s ease-in-out infinite; }';
+        }
+        
         html += '</style>';
         
         // Motivation message
@@ -788,6 +795,54 @@ async function loadDashboard() {
         html += '</div>';
         
         appContainer.innerHTML = html;
+        
+        // アニメーションをトリガー（DOMが更新された後）
+        setTimeout(function() {
+            // プログレスバーのアニメーション
+            const bgBar = document.querySelector('.progress-bg-bar');
+            const fgBar = document.querySelector('.progress-fg-bar');
+            if (bgBar && fgBar) {
+                const bgTarget = bgBar.getAttribute('data-target-width');
+                const fgTarget = fgBar.getAttribute('data-target-width');
+                bgBar.style.width = bgTarget + '%';
+                fgBar.style.width = fgTarget + '%';
+            }
+            
+            // 数値のカウントアップアニメーション
+            const confirmedText = document.querySelector('.progress-confirmed-text');
+            const totalText = document.querySelector('.progress-total-text');
+            
+            if (confirmedText && totalText) {
+                const confirmedTarget = parseInt(confirmedText.getAttribute('data-target'));
+                const totalTarget = parseInt(totalText.getAttribute('data-target'));
+                const targetDisplay = confirmedText.getAttribute('data-target-display');
+                
+                let confirmedCurrent = 0;
+                let totalCurrent = 0;
+                const duration = 1500; // 1.5秒
+                const steps = 60;
+                const interval = duration / steps;
+                
+                const confirmedStep = confirmedTarget / steps;
+                const totalStep = totalTarget / steps;
+                
+                let stepCount = 0;
+                const countInterval = setInterval(function() {
+                    stepCount++;
+                    confirmedCurrent = Math.min(Math.round(confirmedStep * stepCount), confirmedTarget);
+                    totalCurrent = Math.min(Math.round(totalStep * stepCount), totalTarget);
+                    
+                    confirmedText.textContent = confirmedCurrent + '/' + targetDisplay + ' (成約)';
+                    totalText.textContent = totalCurrent + '/' + targetDisplay + ' (成約＋見込み)';
+                    
+                    if (stepCount >= steps) {
+                        clearInterval(countInterval);
+                        confirmedText.textContent = confirmedTarget + '/' + targetDisplay + ' (成約)';
+                        totalText.textContent = totalTarget + '/' + targetDisplay + ' (成約＋見込み)';
+                    }
+                }, interval);
+            }
+        }, 100);
         
     } catch (error) {
         console.error('Dashboard load error:', error);
