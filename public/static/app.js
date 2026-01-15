@@ -2423,9 +2423,9 @@ function showCelebrationAnimation() {
     `;
     
     card.innerHTML = `
-        <div style="font-size: 80px; margin-bottom: 20px; animation: rotate 1s ease;">🎉</div>
-        <h2 style="font-size: 32px; margin: 0 0 10px 0; font-weight: 700;">おめでとうございます！</h2>
-        <p style="font-size: 20px; margin: 0 0 30px 0; opacity: 0.9;">成約が完了しました！</p>
+        <div style="font-size: 80px; margin-bottom: 20px; animation: rotate 1s ease; user-select: none; cursor: default;">🎉</div>
+        <h2 style="font-size: 32px; margin: 0 0 10px 0; font-weight: 700; user-select: none;">おめでとうございます！</h2>
+        <p style="font-size: 20px; margin: 0 0 30px 0; opacity: 0.9; user-select: none;">成約が完了しました！</p>
         <button style="
             background: white;
             color: #667eea;
@@ -2436,6 +2436,7 @@ function showCelebrationAnimation() {
             font-weight: 600;
             cursor: pointer;
             transition: transform 0.2s;
+            user-select: none;
         " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
             閉じる
         </button>
