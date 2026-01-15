@@ -425,6 +425,12 @@ async function loadDashboard() {
         }
         
         html += '</div>';
+        
+        // ログアウトボタン
+        html += '<button onclick="logout()" style="padding: 6px 12px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: background 0.2s;">';
+        html += '<i class="fas fa-sign-out-alt" style="margin-right: 4px;"></i>ログアウト';
+        html += '</button>';
+        
         html += '</div>';
         html += '</div>';
         
