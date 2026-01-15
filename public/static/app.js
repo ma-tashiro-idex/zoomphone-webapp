@@ -400,11 +400,20 @@ async function loadDashboard() {
         }).join('') : '';
         
         // Render modern dashboard HTML
-        let html = confettiStyles + confettiHtml + '<div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">';
+        let html = confettiStyles + confettiHtml;
+        
+        // Header with user info (right aligned, small)
+        html += '<div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 15px;">';
+        html += '<div style="text-align: right; color: #718096; font-size: 12px;">';
+        html += '<div style="font-weight: 600;">ログイン中: ' + currentUserEmail + '</div>';
+        html += '</div>';
+        html += '</div>';
+        
+        html += '<div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">';
         
         // Header with Fiscal Year selector
         html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #e2e8f0;">';
-        html += '<h2 style="color: #0284c7; font-size: 24px; margin: 0;">📈 進捗ダッシュボード</h2>';
+        html += '<h2 style="color: #0284c7; font-size: 24px; margin: 0; font-weight: 700;">📈 進捗ダッシュボード</h2>';
         
         // 年度選択ドロップダウン
         html += '<div style="display: flex; gap: 10px; align-items: center;">';
