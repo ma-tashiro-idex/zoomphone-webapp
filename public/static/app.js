@@ -214,8 +214,17 @@ async function loadDashboard() {
         // Store all deals for filtering
         allDeals = deals;
         
+        // 年度別の目標値を設定（早期定義）
+        const yearlyTargets = {
+            2024: 1240,
+            2025: 1000,
+            2026: '???'
+        };
+        const targetLicenses = yearlyTargets[fiscalYear];
+        const isTargetNumeric = typeof targetLicenses === 'number';
+        
         // 9段階の達成率別メッセージシステム（成約のみで計算）
-        const rate = stats.confirmed_licenses && targetLicenses > 0 
+        const rate = stats.confirmed_licenses && isTargetNumeric 
             ? Math.round((stats.confirmed_licenses / targetLicenses) * 100)
             : 0;
         let progressTheme = 'normal';
@@ -472,15 +481,8 @@ async function loadDashboard() {
         html += '<div class="' + rainbowClass + '" style="background: ' + themeColors[progressTheme] + '; padding: 35px; border-radius: 15px; margin-bottom: 30px; box-shadow: ' + themeShadows[progressTheme] + '; color: white;">';
         html += '<div style="font-size: 28px; font-weight: bold; margin-bottom: 20px;">' + progressStatus + '</div>';
         
-        // 年度別の目標値を設定
-        const yearlyTargets = {
-            2024: 1240,
-            2025: 1000,
-            2026: '???'
-        };
-        const targetLicenses = yearlyTargets[fiscalYear];
+        // 目標値の表示用変数
         const targetDisplay = typeof targetLicenses === 'number' ? targetLicenses.toLocaleString() : targetLicenses;
-        const isTargetNumeric = typeof targetLicenses === 'number';
         
         // 目標超過の場合は特別表示（数値目標の場合のみ）
         if (isTargetNumeric && exceedAmount > 0) {
