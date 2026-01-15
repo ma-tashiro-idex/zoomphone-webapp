@@ -511,7 +511,11 @@ async function loadDashboard() {
         if (!isTargetNumeric) {
             html += '<div style="font-size: 28px; font-weight: bold; line-height: 1;">???</div>';
         } else if (confirmedRemaining > 0) {
-            html += '<div style="font-size: 32px; font-weight: bold; line-height: 1.3;">あと' + confirmedRemaining + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">ライセンス</span> <span style="font-size: 13px; opacity: 0.7; margin-left: 15px;">💡 見込み含む:あと' + totalRemaining + '</span></div>';
+            // 成約のみでは未達成
+            const prospectText = totalRemaining <= 0 
+                ? '目標達成（+' + Math.abs(totalRemaining) + 'アカウント）'
+                : 'あと' + totalRemaining;
+            html += '<div style="font-size: 32px; font-weight: bold; line-height: 1.3;">あと' + confirmedRemaining + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">ライセンス</span> <span style="font-size: 13px; opacity: 0.7; margin-left: 15px;">💡 見込み含む:' + prospectText + '</span></div>';
         } else {
             html += '<div style="font-size: 28px; font-weight: bold; line-height: 1;">🎊 達成済み</div>';
         }
@@ -695,14 +699,8 @@ async function loadDashboard() {
         html += '<span>案件一覧</span>';
         html += '</h2>';
         html += '<div style="display: flex; gap: 10px; flex-wrap: wrap;">';
-        html += '<button onclick="downloadTemplate()" style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
-        html += '📄 テンプレートDL';
-        html += '</button>';
         html += '<button onclick="exportToCSV()" style="background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
         html += '📤 CSVエクスポート';
-        html += '</button>';
-        html += '<button onclick="downloadExcelTemplate()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
-        html += '📋 Excelテンプレート';
         html += '</button>';
         html += '<button onclick="showImportModal()" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
         html += '📥 Excelインポート';
