@@ -645,8 +645,12 @@ async function loadDashboard() {
         html += '</div>';
         
         // Deals List with Add, Import, Export, Template Buttons
-        html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; margin-bottom: 15px;">';
-        html += '<h3 style="margin: 0; color: #2d3748;">💼 案件一覧</h3>';
+        html += '<div style="margin-top: 30px; margin-bottom: 20px;">';
+        html += '<div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; border-bottom: 3px solid #3b82f6;">';
+        html += '<h2 style="margin: 0; color: #1e293b; font-size: 28px; font-weight: 700; display: flex; align-items: center; gap: 10px;">';
+        html += '<span style="font-size: 32px;">💼</span>';
+        html += '<span>案件一覧</span>';
+        html += '</h2>';
         html += '<div style="display: flex; gap: 10px; flex-wrap: wrap;">';
         html += '<button onclick="downloadTemplate()" style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
         html += '📄 テンプレートDL';
@@ -662,12 +666,19 @@ async function loadDashboard() {
         html += '</button>';
         html += '</div>';
         html += '</div>';
+        html += '</div>';
         
         // Search and Filter Section (moved below the title)
         html += '<div style="margin-bottom: 20px;">';
         html += '<h3 style="margin-top: 0; margin-bottom: 15px; color: #2d3748;">🔍 検索・フィルター</h3>';
         
         html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">';
+        
+        // Search by customer name (moved to first position)
+        html += '<div>';
+        html += '<label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600; font-size: 14px;">顧客名検索</label>';
+        html += '<input type="text" id="searchCustomer" placeholder="顧客名を入力..." onkeyup="applyFilters()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; background: white;">';
+        html += '</div>';
         
         // Fiscal Year Filter
         html += '<div>';
@@ -678,12 +689,6 @@ async function loadDashboard() {
         html += '<option value="2025">2025年度</option>';
         html += '<option value="2024">2024年度</option>';
         html += '</select>';
-        html += '</div>';
-        
-        // Search by customer name
-        html += '<div>';
-        html += '<label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600; font-size: 14px;">顧客名検索</label>';
-        html += '<input type="text" id="searchCustomer" placeholder="顧客名を入力..." onkeyup="applyFilters()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px; background: white;">';
         html += '</div>';
         
         // Filter by sales rep
