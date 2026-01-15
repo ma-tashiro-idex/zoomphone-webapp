@@ -246,8 +246,13 @@ app.post('/api/deals', async (c) => {
     const input = await c.req.json<DealCreateInput>();
     
     // Validation
-    if (!input.customer_name || !input.sales_rep || !input.deal_date || !input.status) {
+    if (!input.customer_name || !input.sales_rep || !input.status) {
       return c.json({ success: false, error: '必須項目が不足しています' }, 400);
+    }
+    
+    // 成約の場合は成約日が必須
+    if (input.status === '成約' && !input.closed_date) {
+      return c.json({ success: false, error: '成約日が必要です' }, 400);
     }
     
     if (!input.licenses || input.licenses.length === 0) {
@@ -272,8 +277,13 @@ app.put('/api/deals/:id', async (c) => {
     const input = await c.req.json<Omit<DealUpdateInput, 'id'>>();
     
     // Validation
-    if (!input.customer_name || !input.sales_rep || !input.deal_date || !input.status) {
+    if (!input.customer_name || !input.sales_rep || !input.status) {
       return c.json({ success: false, error: '必須項目が不足しています' }, 400);
+    }
+    
+    // 成約の場合は成約日が必須
+    if (input.status === '成約' && !input.closed_date) {
+      return c.json({ success: false, error: '成約日が必要です' }, 400);
     }
     
     if (!input.licenses || input.licenses.length === 0) {
