@@ -468,11 +468,13 @@ async function loadDashboard() {
         const totalWidth = Math.min(totalRate, 100);
         html += '<div style="margin-bottom: 20px;">';
         html += '<div style="background: rgba(255, 255, 255, 0.2); height: 30px; border-radius: 15px; overflow: hidden; position: relative;">';
-        // 見込み含むバー（薄い背景層）
-        html += '<div style="position: absolute; height: 100%; background: rgba(255, 255, 255, 0.4); border-radius: 15px; width: ' + totalWidth + '%; transition: width 1s ease;"></div>';
-        // 成約のみバー（濃い前景層）
+        // 見込み含むバー（薄い背景層）- テキストを左側に表示
+        html += '<div style="position: absolute; height: 100%; background: rgba(255, 255, 255, 0.4); border-radius: 15px; width: ' + totalWidth + '%; display: flex; align-items: center; padding-left: 15px; font-weight: 600; color: #1e40af; font-size: 12px; opacity: 0.8; transition: width 1s ease;">';
+        html += stats.total_licenses + '/1,000 (成約＋見込み)';
+        html += '</div>';
+        // 成約のみバー（濃い前景層）- テキストを右側に表示
         html += '<div style="position: relative; height: 100%; background: rgba(255, 255, 255, 0.9); border-radius: 15px; width: ' + confirmedWidth + '%; display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; font-weight: bold; color: #1e40af; font-size: 14px; transition: width 1s ease;">';
-        html += stats.confirmed_licenses + ' / 1,000 <span style="font-size: 12px; opacity: 0.7; margin-left: 8px;">(見込み含む:' + stats.total_licenses + ')</span>';
+        html += stats.confirmed_licenses + '/1,000 (成約)';
         html += '</div>';
         html += '</div>';
         html += '</div>';
