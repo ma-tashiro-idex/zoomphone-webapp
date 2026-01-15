@@ -193,7 +193,7 @@ export async function deleteDeal(db: D1Database, customerName: string): Promise<
 /**
  * Get dashboard statistics
  */
-export async function getDashboardStats(db: D1Database, fiscalYear?: number, filter?: '見込み' | '成約'): Promise<DashboardStats> {
+export async function getDashboardStats(db: D1Database, filter?: '見込み' | '成約', fiscalYear?: number): Promise<DashboardStats> {
   const deals = await getAllDeals(db, fiscalYear);
 
   let filteredDeals = deals;
@@ -211,8 +211,15 @@ export async function getDashboardStats(db: D1Database, fiscalYear?: number, fil
     .reduce((sum, deal) => sum + deal.licenses.reduce((s, l) => s + l.license_count, 0), 0);
 
   const totalLicenses = confirmedLicenses + prospectLicenses;
-  const target = 1000;
-  const achievementRate = Math.round((totalLicenses / target) * 100);
+  
+  // 年度別の目標値
+  const yearlyTargets: { [key: number]: number } = {
+    2024: 1240,
+    2025: 1000,
+    2026: 0  // 目標未定
+  };
+  const target = fiscalYear && yearlyTargets[fiscalYear] ? yearlyTargets[fiscalYear] : 1000;
+  const achievementRate = target > 0 ? Math.round((totalLicenses / target) * 100) : 0;
   const remainingTarget = Math.max(0, target - confirmedLicenses);
 
   // Half-year breakdown (fiscal year: April - March)

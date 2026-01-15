@@ -420,8 +420,9 @@ async function loadDashboard() {
         // Use selected fiscal year or current fiscal year
         const selectedYear = fiscalYear || currentFiscalYear;
         
-        // 過去3年分の年度を表示
-        for (let year = currentFiscalYear; year >= currentFiscalYear - 3; year--) {
+        // 年度リスト（2024～2026のみ）
+        const fiscalYears = [2026, 2025, 2024];
+        for (const year of fiscalYears) {
             const selected = year === selectedYear ? ' selected' : '';
             html += '<option value="' + year + '"' + selected + '>' + year + '年度</option>';
         }
@@ -435,18 +436,28 @@ async function loadDashboard() {
         html += '<div class="' + rainbowClass + '" style="background: ' + themeColors[progressTheme] + '; padding: 35px; border-radius: 15px; margin-bottom: 30px; box-shadow: ' + themeShadows[progressTheme] + '; color: white;">';
         html += '<div style="font-size: 28px; font-weight: bold; margin-bottom: 20px;">' + progressStatus + '</div>';
         
-        // 目標超過の場合は特別表示
-        if (exceedAmount > 0) {
+        // 年度別の目標値を設定
+        const yearlyTargets = {
+            2024: 1240,
+            2025: 1000,
+            2026: '???'
+        };
+        const targetLicenses = yearlyTargets[fiscalYear];
+        const targetDisplay = typeof targetLicenses === 'number' ? targetLicenses.toLocaleString() : targetLicenses;
+        const isTargetNumeric = typeof targetLicenses === 'number';
+        
+        // 目標超過の場合は特別表示（数値目標の場合のみ）
+        if (isTargetNumeric && exceedAmount > 0) {
             html += '<div style="font-size: 18px; font-weight: 600; margin-bottom: 15px; padding: 10px; background: rgba(255, 255, 255, 0.2); border-radius: 8px; text-align: center;">';
             html += '🌟 目標超過: +' + exceedAmount + 'ライセンス 🌟';
             html += '</div>';
         }
         
-        // 成約のみの計算
-        const confirmedRemaining = 1000 - stats.confirmed_licenses;
-        const confirmedRate = Math.round((stats.confirmed_licenses / 1000) * 100);
-        const totalRemaining = 1000 - stats.total_licenses;
-        const totalRate = stats.achievement_rate;
+        // 成約のみの計算（数値目標の場合のみ計算）
+        const confirmedRemaining = isTargetNumeric ? targetLicenses - stats.confirmed_licenses : 0;
+        const confirmedRate = isTargetNumeric ? Math.round((stats.confirmed_licenses / targetLicenses) * 100) : 0;
+        const totalRemaining = isTargetNumeric ? targetLicenses - stats.total_licenses : 0;
+        const totalRate = isTargetNumeric ? stats.achievement_rate : 0;
         
         // Progress grid (3x2) - 6項目カード
         html += '<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px;">';
@@ -455,13 +466,15 @@ async function loadDashboard() {
         // 1. 年間目標
         html += '<div style="background: rgba(255, 255, 255, 0.2); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">';
         html += '<div style="font-size: 14px; opacity: 0.95; margin-bottom: 10px; font-weight: 600;">年間目標</div>';
-        html += '<div style="font-size: 32px; font-weight: bold; line-height: 1;">1,000<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">ライセンス</span></div>';
+        html += '<div style="font-size: 32px; font-weight: bold; line-height: 1;">' + targetDisplay + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">' + (isTargetNumeric ? 'ライセンス' : '') + '</span></div>';
         html += '</div>';
         
         // 2. 目標達成まで（成約ベース）
         html += '<div style="background: rgba(255, 255, 255, 0.2); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">';
         html += '<div style="font-size: 14px; opacity: 0.95; margin-bottom: 10px; font-weight: 600;">目標達成まで</div>';
-        if (confirmedRemaining > 0) {
+        if (!isTargetNumeric) {
+            html += '<div style="font-size: 28px; font-weight: bold; line-height: 1;">???</div>';
+        } else if (confirmedRemaining > 0) {
             html += '<div style="font-size: 32px; font-weight: bold; line-height: 1.3;">あと' + confirmedRemaining + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">ライセンス</span> <span style="font-size: 13px; opacity: 0.7; margin-left: 15px;">💡 見込み含む:あと' + totalRemaining + '</span></div>';
         } else {
             html += '<div style="font-size: 28px; font-weight: bold; line-height: 1;">🎊 達成済み</div>';
@@ -471,7 +484,11 @@ async function loadDashboard() {
         // 3. 達成率（成約ベース）
         html += '<div style="background: rgba(255, 255, 255, 0.2); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">';
         html += '<div style="font-size: 14px; opacity: 0.95; margin-bottom: 10px; font-weight: 600;">達成率</div>';
-        html += '<div style="font-size: 32px; font-weight: bold; line-height: 1.3;">' + confirmedRate + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">%</span> <span style="font-size: 13px; opacity: 0.7; margin-left: 15px;">💡 見込み含む:' + totalRate + '%</span></div>';
+        if (!isTargetNumeric) {
+            html += '<div style="font-size: 28px; font-weight: bold; line-height: 1;">???</div>';
+        } else {
+            html += '<div style="font-size: 32px; font-weight: bold; line-height: 1.3;">' + confirmedRate + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">%</span> <span style="font-size: 13px; opacity: 0.7; margin-left: 15px;">💡 見込み含む:' + totalRate + '%</span></div>';
+        }
         html += '</div>';
         
         // 下段
@@ -498,27 +515,34 @@ async function loadDashboard() {
         html += '</div>';
         
         // Progress Bar（成約 + 薄く見込み）
-        const confirmedWidth = Math.min(confirmedRate, 100);
-        const totalWidth = Math.min(totalRate, 100);
+        const confirmedWidth = isTargetNumeric ? Math.min(confirmedRate, 100) : 0;
+        const totalWidth = isTargetNumeric ? Math.min(totalRate, 100) : 0;
         html += '<div style="margin-bottom: 20px;">';
-        // バー部分
-        html += '<div class="progress-bar-container" style="background: rgba(255, 255, 255, 0.2); height: 30px; border-radius: 15px; overflow: hidden; position: relative; cursor: pointer; margin-bottom: 5px;">';
-        // 見込み含むバー（薄い背景層）
-        html += '<div class="progress-bg-bar" style="position: absolute; height: 100%; background: rgba(255, 255, 255, 0.4); border-radius: 15px; width: ' + totalWidth + '%; transition: width 1s ease;"></div>';
-        // 成約のみバー（濃い前景層）
-        html += '<div class="progress-fg-bar" style="position: relative; height: 100%; background: rgba(255, 255, 255, 0.9); border-radius: 15px; width: ' + confirmedWidth + '%; transition: width 1s ease;"></div>';
-        html += '</div>';
-        // テキスト部分（バーの下）- バーの先端位置に配置
-        html += '<div class="progress-text-container" style="position: relative; height: 20px; opacity: 0; transition: opacity 0.3s;">';
-        // 成約のテキスト（成約バーの先端下）
-        html += '<div class="progress-confirmed-text" style="position: absolute; left: ' + confirmedWidth + '%; transform: translateX(-50%); font-size: 12px; color: white; font-weight: 600; white-space: nowrap;">';
-        html += stats.confirmed_licenses + '/1,000 (成約)';
-        html += '</div>';
-        // 見込み含むのテキスト（見込みバーの先端下）
-        html += '<div class="progress-total-text" style="position: absolute; left: ' + totalWidth + '%; transform: translateX(-50%); font-size: 12px; color: white; font-weight: 600; opacity: 0.8; white-space: nowrap;">';
-        html += stats.total_licenses + '/1,000 (成約＋見込み)';
-        html += '</div>';
-        html += '</div>';
+        if (!isTargetNumeric) {
+            // 2026年度は目標未定なのでプログレスバーなし
+            html += '<div style="padding: 20px; text-align: center; background: rgba(255, 255, 255, 0.2); border-radius: 12px; font-size: 18px; font-weight: 600; color: white;">';
+            html += '📊 年度目標が設定されていません';
+            html += '</div>';
+        } else {
+            // バー部分
+            html += '<div class="progress-bar-container" style="background: rgba(255, 255, 255, 0.2); height: 30px; border-radius: 15px; overflow: hidden; position: relative; cursor: pointer; margin-bottom: 5px;">';
+            // 見込み含むバー（薄い背景層）
+            html += '<div class="progress-bg-bar" style="position: absolute; height: 100%; background: rgba(255, 255, 255, 0.4); border-radius: 15px; width: ' + totalWidth + '%; transition: width 1s ease;"></div>';
+            // 成約のみバー（濃い前景層）
+            html += '<div class="progress-fg-bar" style="position: relative; height: 100%; background: rgba(255, 255, 255, 0.9); border-radius: 15px; width: ' + confirmedWidth + '%; transition: width 1s ease;"></div>';
+            html += '</div>';
+            // テキスト部分（バーの下）- バーの先端位置に配置
+            html += '<div class="progress-text-container" style="position: relative; height: 20px; opacity: 0; transition: opacity 0.3s;">';
+            // 成約のテキスト（成約バーの先端下）
+            html += '<div class="progress-confirmed-text" style="position: absolute; left: ' + confirmedWidth + '%; transform: translateX(-50%); font-size: 12px; color: white; font-weight: 600; white-space: nowrap;">';
+            html += stats.confirmed_licenses + '/' + targetDisplay + ' (成約)';
+            html += '</div>';
+            // 見込み含むのテキスト（見込みバーの先端下）
+            html += '<div class="progress-total-text" style="position: absolute; left: ' + totalWidth + '%; transform: translateX(-50%); font-size: 12px; color: white; font-weight: 600; opacity: 0.8; white-space: nowrap;">';
+            html += stats.total_licenses + '/' + targetDisplay + ' (成約＋見込み)';
+            html += '</div>';
+            html += '</div>';
+        }
         html += '</div>';
         
         // ホバー時にテキストを表示するスタイル
