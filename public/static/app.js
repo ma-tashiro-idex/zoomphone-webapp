@@ -779,30 +779,35 @@ function renderDealItem(deal) {
     const statusBg = deal.status === '成約' ? '#c6f6d5' : '#bee3f8';
     const statusTextColor = deal.status === '成約' ? '#22543d' : '#2c5282';
     
-    let html = '<div class="card" style="margin-bottom: 15px; border-left: 4px solid ' + statusColor + ';">';
-    html += '<div style="display: flex; justify-content: space-between; align-items: start;">';
+    let html = '<div class="card" style="margin-bottom: 12px; border-left: 4px solid ' + statusColor + '; padding: 16px;">';
+    html += '<div style="display: flex; justify-content: space-between; align-items: center;">';
     html += '<div style="flex: 1;">';
-    html += '<div style="font-weight: 600; color: #2d3748; margin-bottom: 8px; font-size: 18px;">';
-    html += deal.customer_name + ' ';
-    html += '<span style="display: inline-block; background: ' + statusBg + '; color: ' + statusTextColor + '; padding: 4px 12px; border-radius: 12px; font-size: 12px; margin-left: 8px;">';
+    
+    // 1行目：顧客名＋日付を横並び
+    html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">';
+    html += '<div>';
+    html += '<span style="font-weight: 700; color: #2d3748; font-size: 18px;">' + deal.customer_name + '</span>';
+    html += '<span style="display: inline-block; background: ' + statusBg + '; color: ' + statusTextColor + '; padding: 3px 10px; border-radius: 12px; font-size: 12px; margin-left: 8px;">';
     html += deal.status;
     html += '</span>';
-    html += '<span style="display: inline-block; background: #e9d8fd; color: #553c9a; padding: 4px 12px; border-radius: 12px; font-size: 12px; margin-left: 8px;">';
+    html += '<span style="display: inline-block; background: #e9d8fd; color: #553c9a; padding: 3px 10px; border-radius: 12px; font-size: 12px; margin-left: 6px;">';
     html += deal.sales_rep;
     html += '</span>';
     html += '</div>';
-    html += '<div style="color: #718096; font-size: 14px; margin-bottom: 4px;">';
-    html += '📦 合計: <strong>' + totalLicenses + 'ライセンス</strong>';
+    
+    // 日付を右側に配置（大きめ）
+    html += '<div style="text-align: right;">';
+    html += '<div style="color: #718096; font-size: 10px; font-weight: 600;">' + dateLabel + '</div>';
+    html += '<div style="color: #2d3748; font-size: 15px; font-weight: 700;">📅 ' + dateValue + '</div>';
     html += '</div>';
-    html += '<div style="color: #a0aec0; font-size: 13px; margin-bottom: 8px;">';
-    html += licenseDetails;
     html += '</div>';
     
-    // 日付を独立したブロックとして大きく表示
-    html += '<div style="margin-top: 8px; padding: 10px 14px; background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); border-radius: 8px; border-left: 3px solid ' + statusColor + ';">';
-    html += '<div style="color: #718096; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">' + dateLabel + '</div>';
-    html += '<div style="color: #2d3748; font-size: 16px; font-weight: 700;">📅 ' + dateValue + '</div>';
+    // 2行目：ライセンス情報
+    html += '<div style="display: flex; gap: 16px; color: #718096; font-size: 13px;">';
+    html += '<span>📦 合計: <strong style="color: #2d3748;">' + totalLicenses + 'ライセンス</strong></span>';
+    html += '<span style="color: #a0aec0;">' + licenseDetails + '</span>';
     html += '</div>';
+    
     html += '</div>';
     
     // Action buttons
