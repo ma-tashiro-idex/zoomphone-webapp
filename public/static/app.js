@@ -513,7 +513,7 @@ async function loadDashboard() {
         } else if (confirmedRemaining > 0) {
             // 成約のみでは未達成
             const prospectText = totalRemaining <= 0 
-                ? '目標達成（+' + Math.abs(totalRemaining) + 'アカウント）'
+                ? '目標達成'
                 : 'あと' + totalRemaining;
             html += '<div style="font-size: 32px; font-weight: bold; line-height: 1.3;">あと' + confirmedRemaining + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">ライセンス</span> <span style="font-size: 13px; opacity: 0.7; margin-left: 15px;">💡 見込み含む:' + prospectText + '</span></div>';
         } else {
