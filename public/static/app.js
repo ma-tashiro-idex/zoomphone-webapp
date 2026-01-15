@@ -1057,6 +1057,21 @@ window.toggleClosedDateField = function() {
     }
 }
 
+// Toggle date field for edit modal
+window.toggleClosedDateFieldEdit = function() {
+    const status = document.getElementById('dealStatus').value;
+    const closedDateContainer = document.getElementById('closedDateContainer');
+    const updatedDateContainer = document.getElementById('updatedDateContainer');
+    
+    if (status === '成約') {
+        closedDateContainer.style.display = 'block';
+        if (updatedDateContainer) updatedDateContainer.style.display = 'none';
+    } else {
+        closedDateContainer.style.display = 'none';
+        if (updatedDateContainer) updatedDateContainer.style.display = 'block';
+    }
+}
+
 // Add license row
 window.addLicenseRow = function() {
     const container = document.getElementById('licenseRows');
@@ -1294,7 +1309,7 @@ window.editDeal = async function(dealId) {
                     
                     <div style="margin-bottom: 20px;">
                         <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600;">ステータス *</label>
-                        <select id="dealStatus" onchange="toggleClosedDateField()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
+                        <select id="dealStatus" onchange="toggleClosedDateFieldEdit()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
                             <option value="見込み" ${deal.status === '見込み' ? 'selected' : ''}>見込み</option>
                             <option value="成約" ${deal.status === '成約' ? 'selected' : ''}>成約</option>
                         </select>
@@ -1302,7 +1317,12 @@ window.editDeal = async function(dealId) {
                     
                     <div id="closedDateContainer" style="margin-bottom: 20px; display: ${deal.status === '成約' ? 'block' : 'none'};">
                         <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600;">成約日 *</label>
-                        <input type="date" id="closedDate" value="${deal.closed_date || ''}" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
+                        <input type="date" id="closedDate" value="${deal.closed_date ? deal.closed_date.split('T')[0] : ''}" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
+                    </div>
+                    
+                    <div id="updatedDateContainer" style="margin-bottom: 20px; display: ${deal.status === '見込み' ? 'block' : 'none'};">
+                        <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600;">最終更新日</label>
+                        <input type="date" id="updatedDate" value="${deal.updated_at ? deal.updated_at.split('T')[0] : ''}" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
                     </div>
                     
                     <div style="margin-bottom: 20px;">
@@ -1349,6 +1369,9 @@ window.updateDeal = async function(dealId) {
         const salesRep = document.getElementById('salesRep').value;
         const status = document.getElementById('dealStatus').value;
         const closedDate = status === '成約' ? document.getElementById('closedDate').value : null;
+        const updatedDate = status === '見込み' && document.getElementById('updatedDate') 
+            ? document.getElementById('updatedDate').value 
+            : null;
         
         // Validate
         if (!customerName || !salesRep) {
@@ -1395,6 +1418,11 @@ window.updateDeal = async function(dealId) {
         // 成約の場合のみclosed_dateを追加
         if (status === '成約' && closedDate) {
             requestBody.closed_date = closedDate;
+        }
+        
+        // 見込みで最終更新日が指定されている場合は追加
+        if (status === '見込み' && updatedDate) {
+            requestBody.updated_at = updatedDate;
         }
         
         await apiCall(API_BASE + '/deals/' + dealId, {
