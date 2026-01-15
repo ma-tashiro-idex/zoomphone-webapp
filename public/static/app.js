@@ -463,12 +463,12 @@ async function loadDashboard() {
         
         html += '</div>';
         
-        // Progress Bar
-        const progressWidth = Math.min(stats.achievement_rate, 100);
+        // Progress Bar（成約のみ）
+        const progressWidth = Math.min(confirmedRate, 100);
         html += '<div style="margin-bottom: 20px;">';
         html += '<div style="background: rgba(255, 255, 255, 0.2); height: 30px; border-radius: 15px; overflow: hidden; position: relative;">';
         html += '<div style="height: 100%; background: rgba(255, 255, 255, 0.9); border-radius: 15px; width: ' + progressWidth + '%; display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; font-weight: bold; color: #1e40af; font-size: 14px; transition: width 1s ease;">';
-        html += stats.total_licenses + ' / 1,000';
+        html += stats.confirmed_licenses + ' / 1,000 <span style="font-size: 12px; opacity: 0.7; margin-left: 8px;">(見込み含む:' + stats.total_licenses + ')</span>';
         html += '</div>';
         html += '</div>';
         html += '</div>';
