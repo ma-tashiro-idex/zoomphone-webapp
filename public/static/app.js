@@ -699,8 +699,11 @@ async function loadDashboard() {
         html += '<button onclick="exportToCSV()" style="background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
         html += '📤 CSVエクスポート';
         html += '</button>';
+        html += '<button onclick="downloadExcelTemplate()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+        html += '📋 Excelテンプレート';
+        html += '</button>';
         html += '<button onclick="showImportModal()" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
-        html += '📥 インポート';
+        html += '📥 Excelインポート';
         html += '</button>';
         html += '<button onclick="showAddDealModal()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
         html += '➕ 新規追加';
@@ -1369,7 +1372,16 @@ window.showImportModal = function() {
     const modalHtml = `
         <div id="importModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
             <div style="background: white; padding: 30px; border-radius: 12px; max-width: 800px; width: 90%; max-height: 90vh; overflow-y: auto;">
-                <h2 style="margin-top: 0; color: #2d3748;">📥 Excel/CSVインポート</h2>
+                <h2 style="margin-top: 0; color: #2d3748;">📥 Excelインポート</h2>
+                
+                <div style="background: #ebf8ff; border-left: 4px solid #4299e1; padding: 15px; margin-bottom: 20px; border-radius: 8px;">
+                    <p style="margin: 0; color: #2d3748; font-size: 14px;">
+                        <strong>💡 使い方:</strong><br>
+                        1. 「📋 Excelテンプレート」ボタンからテンプレートをダウンロード<br>
+                        2. Excelでデータを入力して保存<br>
+                        3. 下のエリアにファイルをドラッグ＆ドロップ
+                    </p>
+                </div>
                 
                 <div id="uploadArea" style="border: 3px dashed #cbd5e0; border-radius: 12px; padding: 40px; text-align: center; margin-bottom: 20px; cursor: pointer; transition: all 0.3s;" onmouseover="this.style.borderColor='#4299e1'; this.style.background='#ebf8ff'" onmouseout="this.style.borderColor='#cbd5e0'; this.style.background='white'">
                     <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display: none;" onchange="handleFileSelect(event)">
@@ -2125,6 +2137,61 @@ window.downloadTemplate = function() {
     downloadCSVFile(csv, 'zoomphone_template.csv');
     
     console.log('✅ テンプレートダウンロード完了');
+}
+
+// Download Excel Template
+window.downloadExcelTemplate = function() {
+    console.log('📋 Excelテンプレートダウンロード開始');
+    
+    try {
+        // テンプレートデータを作成
+        const templateData = [
+            // ヘッダー行
+            ['顧客名', '営業担当者', '登録日', 'ステータス', '成約日', '無制限＋0ABJ', '無制限＋050', '従量制＋0ABJ', '従量制＋050', '従量制(Pro)', '内線のみ'],
+            // サンプル行1
+            ['株式会社サンプル', '山田', '2025-01-01', '成約', '2025-01-15', '5', '3', '0', '0', '0', '2'],
+            // サンプル行2
+            ['テスト株式会社', '田中', '2025-01-10', '見込み', '', '10', '0', '5', '0', '0', '0'],
+            // 空行（入力用）
+            ['', '', '', '', '', '', '', '', '', '', '']
+        ];
+        
+        // ワークブックを作成
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(templateData);
+        
+        // 列幅を設定
+        ws['!cols'] = [
+            {wch: 20}, // 顧客名
+            {wch: 15}, // 営業担当者
+            {wch: 12}, // 登録日
+            {wch: 10}, // ステータス
+            {wch: 12}, // 成約日
+            {wch: 15}, // 無制限＋0ABJ
+            {wch: 15}, // 無制限＋050
+            {wch: 15}, // 従量制＋0ABJ
+            {wch: 15}, // 従量制＋050
+            {wch: 15}, // 従量制(Pro)
+            {wch: 12}  // 内線のみ
+        ];
+        
+        // ワークシートをワークブックに追加
+        XLSX.utils.book_append_sheet(wb, ws, 'ZoomPhone案件');
+        
+        // ファイルをダウンロード
+        const today = new Date().toISOString().split('T')[0];
+        const filename = `ZoomPhone_インポートテンプレート_${today}.xlsx`;
+        XLSX.writeFile(wb, filename);
+        
+        console.log('✅ Excelテンプレートダウンロード完了:', filename);
+        
+        // 説明メッセージを表示
+        alert('📋 Excelテンプレートをダウンロードしました！\n\n使い方:\n1. ダウンロードしたExcelファイルを開く\n2. サンプル行を参考にデータを入力\n3. 保存して「Excelインポート」ボタンから読み込む\n\n注意事項:\n・ステータスは「成約」または「見込み」を入力\n・成約の場合は成約日を入力してください\n・日付形式: YYYY-MM-DD（例: 2025-01-15）\n・ライセンス数は半角数字で入力');
+        
+    } catch (error) {
+        console.error('❌ Excelテンプレートダウンロードエラー:', error);
+        alert('Excelテンプレートのダウンロードに失敗しました: ' + error.message);
+    }
 }
 
 // Export to CSV
