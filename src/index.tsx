@@ -244,6 +244,7 @@ app.get('/api/deals/:id{[0-9]+}', async (c) => {
         sales_rep: deal.sales_rep,
         deal_date: deal.deal_date,
         status: deal.status,
+        closed_date: deal.closed_date,
         source: deal.source,
         created_at: deal.created_at,
         updated_at: deal.updated_at,
