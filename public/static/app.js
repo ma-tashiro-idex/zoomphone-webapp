@@ -794,11 +794,14 @@ function renderDealItem(deal) {
     html += '<div style="color: #718096; font-size: 14px; margin-bottom: 4px;">';
     html += '📦 合計: <strong>' + totalLicenses + 'ライセンス</strong>';
     html += '</div>';
-    html += '<div style="color: #a0aec0; font-size: 13px; margin-bottom: 4px;">';
+    html += '<div style="color: #a0aec0; font-size: 13px; margin-bottom: 8px;">';
     html += licenseDetails;
     html += '</div>';
-    html += '<div style="color: #a0aec0; font-size: 12px;">';
-    html += '📅 ' + dateLabel + ': ' + dateValue;
+    
+    // 日付を独立したブロックとして大きく表示
+    html += '<div style="margin-top: 8px; padding: 10px 14px; background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); border-radius: 8px; border-left: 3px solid ' + statusColor + ';">';
+    html += '<div style="color: #718096; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">' + dateLabel + '</div>';
+    html += '<div style="color: #2d3748; font-size: 16px; font-weight: 700;">📅 ' + dateValue + '</div>';
     html += '</div>';
     html += '</div>';
     
