@@ -491,16 +491,31 @@ async function loadDashboard() {
         }
         html += '</div>';
         
+        // 年度でフィルタリングした案件を計算
+        const fiscalYearStart = new Date(fiscalYear, 3, 1); // April 1st
+        const fiscalYearEnd = new Date(fiscalYear + 1, 2, 31, 23, 59, 59); // March 31st next year
+        
+        const fiscalYearDeals = deals.filter(deal => {
+            if (deal.status === '成約' && deal.closed_date) {
+                const closedDate = new Date(deal.closed_date);
+                return closedDate >= fiscalYearStart && closedDate <= fiscalYearEnd;
+            } else if (deal.status === '見込み' && deal.updated_at) {
+                const updatedDate = new Date(deal.updated_at);
+                return updatedDate >= fiscalYearStart && updatedDate <= fiscalYearEnd;
+            }
+            return false;
+        });
+        
         // 下段
         // 4. 成約案件
-        const confirmedCount = deals.filter(d => d.status === '成約').length;
+        const confirmedCount = fiscalYearDeals.filter(d => d.status === '成約').length;
         html += '<div style="background: rgba(255, 255, 255, 0.2); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">';
         html += '<div style="font-size: 14px; opacity: 0.95; margin-bottom: 10px; font-weight: 600;">成約案件</div>';
         html += '<div style="font-size: 32px; font-weight: bold; line-height: 1;">' + stats.confirmed_licenses + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">ライセンス</span> <span style="font-size: 14px; opacity: 0.8;">(' + confirmedCount + '件)</span></div>';
         html += '</div>';
         
         // 5. 見込み案件
-        const prospectCount = deals.filter(d => d.status === '見込み').length;
+        const prospectCount = fiscalYearDeals.filter(d => d.status === '見込み').length;
         html += '<div style="background: rgba(255, 255, 255, 0.2); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">';
         html += '<div style="font-size: 14px; opacity: 0.95; margin-bottom: 10px; font-weight: 600;">見込み案件</div>';
         html += '<div style="font-size: 32px; font-weight: bold; line-height: 1;">' + stats.prospect_licenses + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">ライセンス</span> <span style="font-size: 14px; opacity: 0.8;">(' + prospectCount + '件)</span></div>';
@@ -509,7 +524,7 @@ async function loadDashboard() {
         // 6. 成約＋見込み
         html += '<div style="background: rgba(255, 255, 255, 0.2); padding: 20px; border-radius: 12px; backdrop-filter: blur(10px);">';
         html += '<div style="font-size: 14px; opacity: 0.95; margin-bottom: 10px; font-weight: 600;">成約＋見込み</div>';
-        html += '<div style="font-size: 32px; font-weight: bold; line-height: 1;">' + stats.total_licenses + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">ライセンス</span> <span style="font-size: 14px; opacity: 0.8;">(' + deals.length + '件)</span></div>';
+        html += '<div style="font-size: 32px; font-weight: bold; line-height: 1;">' + stats.total_licenses + '<span style="font-size: 16px; opacity: 0.9; margin-left: 8px;">ライセンス</span> <span style="font-size: 14px; opacity: 0.8;">(' + fiscalYearDeals.length + '件)</span></div>';
         html += '</div>';
         
         html += '</div>';
@@ -565,24 +580,9 @@ async function loadDashboard() {
         html += '<span>営業担当者別実績</span>';
         html += '</h3>';
         
-        // 営業担当者別の集計
-        // First filter deals by fiscal year
-        const fiscalYearStart = new Date(fiscalYear, 3, 1); // April 1st
-        const fiscalYearEnd = new Date(fiscalYear + 1, 2, 31, 23, 59, 59); // March 31st next year
-        
-        const filteredDeals = deals.filter(deal => {
-            if (deal.status === '成約' && deal.closed_date) {
-                const closedDate = new Date(deal.closed_date);
-                return closedDate >= fiscalYearStart && closedDate <= fiscalYearEnd;
-            } else if (deal.status === '見込み' && deal.updated_at) {
-                const updatedDate = new Date(deal.updated_at);
-                return updatedDate >= fiscalYearStart && updatedDate <= fiscalYearEnd;
-            }
-            return false;
-        });
-        
+        // 営業担当者別の集計（年度フィルタリング済みのfiscalYearDealsを使用）
         const salesStats = {};
-        filteredDeals.forEach(deal => {
+        fiscalYearDeals.forEach(deal => {
             const rep = deal.sales_rep;
             if (!salesStats[rep]) {
                 salesStats[rep] = {
