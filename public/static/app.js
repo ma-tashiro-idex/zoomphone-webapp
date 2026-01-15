@@ -2426,7 +2426,7 @@ function showCelebrationAnimation() {
         <div style="font-size: 80px; margin-bottom: 20px; animation: rotate 1s ease;">🎉</div>
         <h2 style="font-size: 32px; margin: 0 0 10px 0; font-weight: 700;">おめでとうございます！</h2>
         <p style="font-size: 20px; margin: 0 0 30px 0; opacity: 0.9;">成約が完了しました！</p>
-        <button onclick="this.parentElement.parentElement.remove()" style="
+        <button style="
             background: white;
             color: #667eea;
             border: none;
@@ -2478,11 +2478,20 @@ function showCelebrationAnimation() {
             from { opacity: 0; }
             to { opacity: 1; }
         }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
         @keyframes bounceIn {
             0% { transform: scale(0.3); opacity: 0; }
             50% { transform: scale(1.05); }
             70% { transform: scale(0.9); }
             100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes bounceOut {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(0.3); opacity: 0; }
         }
         @keyframes rotate {
             0%, 100% { transform: rotate(0deg); }
@@ -2498,11 +2507,22 @@ function showCelebrationAnimation() {
     
     document.body.appendChild(overlay);
     
-    // 3秒後に自動で閉じる
-    setTimeout(() => {
-        if (overlay.parentElement) {
-            overlay.remove();
-        }
-    }, 3000);
+    // 閉じる関数（フェードアウト付き）
+    const closeWithFade = function() {
+        overlay.style.animation = 'fadeOut 0.5s ease';
+        card.style.animation = 'bounceOut 0.5s cubic-bezier(0.6, -0.28, 0.735, 0.045)';
+        setTimeout(() => {
+            if (overlay.parentElement) {
+                overlay.remove();
+            }
+        }, 500); // アニメーション終了を待つ
+    };
+    
+    // ボタンのonclickを更新
+    const closeButton = card.querySelector('button');
+    closeButton.onclick = closeWithFade;
+    
+    // 3秒後に自動でフェードアウト
+    setTimeout(closeWithFade, 3000);
 }
 
