@@ -367,35 +367,29 @@ rm -rf dist && npm run build
 
 ## 👥 許可ユーザー
 
-現在のシステムアクセス許可リスト（合計24名）：
+現在のシステムアクセス許可リスト（合計19名）：
 
-### 既存ユーザー（12名）
-- hi-abe@idex.co.jp（阿部）
-- hara@idex.co.jp（原）
-- iwanaga@idex.co.jp（岩永）
-- kusumoto@idex.co.jp（楠本）
-- m-yamada@idex.co.jp（山田）
-- maeda@idex.co.jp（前田）
-- s-tashiro@idex.co.jp（田代）
-- t-mizukami@idex.co.jp（水上）
-- t-yoshimura@idex.co.jp（吉村）
-- tanaka@idex.co.jp（田中）
-- tashiro@idex.co.jp（田代）
-- tsuru@idex.co.jp（鶴）
-
-### 新規追加ユーザー（12名）
-- k-murakami@idex.co.jp（村上）⭐ NEW
-- y-motoda@idex.co.jp（元田）⭐ NEW
-- n-takuma@idex.co.jp（詫摩）⭐ NEW
-- s-in@idex.co.jp（印）⭐ NEW
-- s-ohgi@idex.co.jp（扇）⭐ NEW
-- s-takao@idex.co.jp（高尾）⭐ NEW
-- k-sekimoto@idex.co.jp（関本）⭐ NEW
-- kan-yoshimura@idex.co.jp（吉村(寛)）⭐ NEW
-- takao-tomoko@idex.co.jp（高尾知世）
-- sekimoto-kenji@idex.co.jp（関本健二）
-- suetsugu-takashi@idex.co.jp（末次孝）
-- yoshimura-kanako@idex.co.jp（吉村嘉奈子）
+| No. | メールアドレス | 表示名 |
+|-----|---------------|--------|
+| 1 | hi-abe@idex.co.jp | 阿部 |
+| 2 | k-murakami@idex.co.jp | 村上 |
+| 3 | k-sekimoto@idex.co.jp | 関本 |
+| 4 | k-tsuru@idex.co.jp | 鶴 |
+| 5 | k-yoshimura@idex.co.jp | 吉村 |
+| 6 | kan-yoshimura@idex.co.jp | 吉村(寛) |
+| 7 | m-maeda@idex.co.jp | 前田 |
+| 8 | m-tashiro@idex.co.jp | 田代(美) |
+| 9 | ma-tashiro@idex.co.jp | 田代(真) |
+| 10 | n-takuma@idex.co.jp | 詫摩 |
+| 11 | s-in@idex.co.jp | 印 |
+| 12 | s-mizukami@idex.co.jp | 水上 |
+| 13 | s-ohgi@idex.co.jp | 扇 |
+| 14 | s-takao@idex.co.jp | 高尾 |
+| 15 | s-yamada@idex.co.jp | 山田 |
+| 16 | t-iwanaga@idex.co.jp | 岩永 |
+| 17 | t-kusumoto@idex.co.jp | 楠本 |
+| 18 | y-hara@idex.co.jp | 原 |
+| 19 | y-motoda@idex.co.jp | 元田 |
 
 ## 📄 ライセンス
 
