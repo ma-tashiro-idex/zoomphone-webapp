@@ -500,95 +500,72 @@ async function loadDashboard() {
         
         html += '</div>';
         
-        // ライセンス種別内訳カード (横長)
+        // 営業担当者別集計カード
         html += '<div style="background: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">';
         html += '<h3 style="margin-top: 0; margin-bottom: 20px; color: #2d3748; display: flex; align-items: center; gap: 10px;">';
-        html += '<span style="font-size: 24px;">📊</span>';
-        html += '<span>ライセンス種別内訳</span>';
+        html += '<span style="font-size: 24px;">👥</span>';
+        html += '<span>営業担当者別実績</span>';
         html += '</h3>';
         
-        // ライセンス種別ごとの集計
-        const licenseTypes = ['無制限＋0ABJ', '無制限＋050', '従量制＋0ABJ', '従量制＋050', '従量制(Pro)', '内線のみ'];
-        const licenseCounts = {};
-        let totalLicensesForBreakdown = 0;
-        
-        licenseTypes.forEach(type => {
-            licenseCounts[type] = 0;
-        });
-        
+        // 営業担当者別の集計
+        const salesStats = {};
         deals.forEach(deal => {
-            deal.licenses.forEach(license => {
-                if (licenseCounts[license.license_type] !== undefined) {
-                    licenseCounts[license.license_type] += license.license_count;
-                    totalLicensesForBreakdown += license.license_count;
-                }
-            });
-        });
-        
-        // 各ライセンス種別を表示
-        licenseTypes.forEach(type => {
-            const count = licenseCounts[type];
-            const percentage = totalLicensesForBreakdown > 0 ? Math.round((count / totalLicensesForBreakdown) * 100) : 0;
-            const barWidth = percentage;
+            const rep = deal.sales_rep;
+            if (!salesStats[rep]) {
+                salesStats[rep] = {
+                    confirmed: 0,
+                    prospect: 0,
+                    total: 0,
+                    confirmedCount: 0,
+                    prospectCount: 0
+                };
+            }
             
-            html += '<div style="margin-bottom: 15px;">';
-            html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">';
-            html += '<span style="font-size: 14px; font-weight: 600; color: #4a5568;">' + type + '</span>';
-            html += '<span style="font-size: 14px; color: #718096;">' + count + ' (' + percentage + '%)</span>';
-            html += '</div>';
-            html += '<div style="background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden;">';
-            html += '<div style="background: linear-gradient(90deg, #3b82f6, #8b5cf6); height: 100%; width: ' + barWidth + '%; transition: width 0.5s ease;"></div>';
-            html += '</div>';
-            html += '</div>';
+            let dealTotal = 0;
+            deal.licenses.forEach(license => {
+                dealTotal += license.license_count;
+            });
+            
+            if (deal.status === '成約') {
+                salesStats[rep].confirmed += dealTotal;
+                salesStats[rep].confirmedCount++;
+            } else {
+                salesStats[rep].prospect += dealTotal;
+                salesStats[rep].prospectCount++;
+            }
+            salesStats[rep].total += dealTotal;
         });
         
+        // ライセンス数でソート
+        const sortedSales = Object.entries(salesStats).sort((a, b) => b[1].confirmed - a[1].confirmed);
+        
+        // テーブルヘッダー
+        html += '<div style="display: grid; grid-template-columns: 80px 1fr 120px 120px 120px; gap: 10px; padding: 12px; background: #f8fafc; border-radius: 8px; font-weight: 600; color: #475569; font-size: 13px; margin-bottom: 10px;">';
+        html += '<div>順位</div>';
+        html += '<div>担当者</div>';
+        html += '<div style="text-align: center;">成約</div>';
+        html += '<div style="text-align: center;">見込み</div>';
+        html += '<div style="text-align: center;">合計</div>';
         html += '</div>';
         
-        // 月別推移グラフカード (横長)
-        html += '<div style="background: white; padding: 25px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">';
-        html += '<h3 style="margin-top: 0; margin-bottom: 20px; color: #2d3748; display: flex; align-items: center; gap: 10px;">';
-        html += '<span style="font-size: 24px;">📈</span>';
-        html += '<span>月別ライセンス獲得推移</span>';
-        html += '</h3>';
-        
-        // 月別データの集計
-        const monthlyData = {};
-        deals.forEach(deal => {
-            const month = deal.deal_date.substring(0, 7); // YYYY-MM
-            if (!monthlyData[month]) {
-                monthlyData[month] = 0;
-            }
-            deal.licenses.forEach(license => {
-                monthlyData[month] += license.license_count;
-            });
-        });
-        
-        // 月でソート
-        const sortedMonths = Object.keys(monthlyData).sort();
-        const maxMonthlyValue = Math.max(...Object.values(monthlyData), 1);
-        
-        // 直近6ヶ月のみ表示
-        const recentMonths = sortedMonths.slice(-6);
-        
-        recentMonths.forEach(month => {
-            const count = monthlyData[month];
-            const barWidth = Math.round((count / maxMonthlyValue) * 100);
-            const monthLabel = month.substring(5) + '月'; // MM月
+        // 各担当者の実績を表示
+        sortedSales.forEach((entry, index) => {
+            const rep = entry[0];
+            const stats = entry[1];
+            const rank = index + 1;
+            let rankIcon = '📊';
+            if (rank === 1) rankIcon = '🥇';
+            else if (rank === 2) rankIcon = '🥈';
+            else if (rank === 3) rankIcon = '🥉';
             
-            html += '<div style="margin-bottom: 12px;">';
-            html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">';
-            html += '<span style="font-size: 14px; font-weight: 600; color: #4a5568;">' + monthLabel + '</span>';
-            html += '<span style="font-size: 14px; color: #718096;">' + count + ' ライセンス</span>';
-            html += '</div>';
-            html += '<div style="background: #e2e8f0; height: 10px; border-radius: 5px; overflow: hidden;">';
-            html += '<div style="background: linear-gradient(90deg, #10b981, #34d399); height: 100%; width: ' + barWidth + '%; transition: width 0.5s ease;"></div>';
-            html += '</div>';
+            html += '<div style="display: grid; grid-template-columns: 80px 1fr 120px 120px 120px; gap: 10px; padding: 12px; border-bottom: 1px solid #e2e8f0; align-items: center;">';
+            html += '<div style="font-size: 20px; text-align: center;">' + rankIcon + '</div>';
+            html += '<div style="font-weight: 600; color: #1e293b;">' + rep + '</div>';
+            html += '<div style="text-align: center;"><span style="font-weight: 700; color: #10b981; font-size: 16px;">' + stats.confirmed + '</span><span style="font-size: 11px; color: #94a3b8; margin-left: 4px;">(' + stats.confirmedCount + '件)</span></div>';
+            html += '<div style="text-align: center;"><span style="font-weight: 600; color: #3b82f6; font-size: 16px;">' + stats.prospect + '</span><span style="font-size: 11px; color: #94a3b8; margin-left: 4px;">(' + stats.prospectCount + '件)</span></div>';
+            html += '<div style="text-align: center;"><span style="font-weight: 600; color: #64748b; font-size: 16px;">' + stats.total + '</span></div>';
             html += '</div>';
         });
-        
-        if (recentMonths.length === 0) {
-            html += '<div style="text-align: center; color: #94a3b8; padding: 20px;">データがありません</div>';
-        }
         
         html += '</div>';
         
