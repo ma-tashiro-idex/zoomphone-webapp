@@ -670,7 +670,6 @@ async function loadDashboard() {
         
         // Search and Filter Section (moved below the title)
         html += '<div style="margin-bottom: 20px;">';
-        html += '<h3 style="margin-top: 0; margin-bottom: 15px; color: #2d3748;">🔍 検索・フィルター</h3>';
         
         html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">';
         
