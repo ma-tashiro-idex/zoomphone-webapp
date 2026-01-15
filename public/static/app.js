@@ -214,8 +214,10 @@ async function loadDashboard() {
         // Store all deals for filtering
         allDeals = deals;
         
-        // 9段階の達成率別メッセージシステム
-        const rate = stats.achievement_rate;
+        // 9段階の達成率別メッセージシステム（成約のみで計算）
+        const rate = stats.confirmed_licenses && targetLicenses > 0 
+            ? Math.round((stats.confirmed_licenses / targetLicenses) * 100)
+            : 0;
         let progressTheme = 'normal';
         let progressStatus = '📈 順調に進行中';
         let progressMessage = '目標に向かって着実に進んでいます！';
@@ -299,7 +301,7 @@ async function loadDashboard() {
             // 101-109%: 目標超過（虹）
             progressTheme = 'exceed';
             progressStatus = '🚀 目標超過！';
-            exceedAmount = stats.total_licenses - 1000;
+            exceedAmount = stats.confirmed_licenses - targetLicenses;
             progressMessage = getRandomMessage([
                 '素晴らしい成果！目標を超えました！',
                 '期待以上の結果！チームの底力を見せました！',
@@ -312,7 +314,7 @@ async function loadDashboard() {
             // 110-119%: 大幅超過（金）
             progressTheme = 'major-exceed';
             progressStatus = '🏆 大幅目標超過！';
-            exceedAmount = stats.total_licenses - 1000;
+            exceedAmount = stats.confirmed_licenses - targetLicenses;
             progressMessage = getRandomMessage([
                 '圧倒的な成果！驚異的な達成率です！',
                 '大幅超過達成！チームの力は無限大！',
