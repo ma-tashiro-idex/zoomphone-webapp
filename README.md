@@ -367,27 +367,31 @@ rm -rf dist && npm run build
 
 ## 👥 許可ユーザー
 
-現在のシステムアクセス許可リスト（合計20名）：
+現在のシステムアクセス許可リスト（合計24名）：
 
-### 既存ユーザー
-- hi-abe@idex.co.jp
-- s-mizukami@idex.co.jp
-- k-yoshimura@idex.co.jp
-- s-yamada@idex.co.jp
-- yu-tanaka@idex.co.jp
-- t-kusumoto@idex.co.jp
-- ma-tashiro@idex.co.jp
-- y-hara@idex.co.jp
-- m-maeda@idex.co.jp
-- m-tashiro@idex.co.jp
-- t-iwanaga@idex.co.jp
-- k-tsuru@idex.co.jp
+### 既存ユーザー（12名）
+- hi-abe@idex.co.jp（阿部）
+- hara@idex.co.jp（原）
+- iwanaga@idex.co.jp（岩永）
+- kusumoto@idex.co.jp（楠本）
+- m-yamada@idex.co.jp（山田）
+- maeda@idex.co.jp（前田）
+- s-tashiro@idex.co.jp（田代）
+- t-mizukami@idex.co.jp（水上）
+- t-yoshimura@idex.co.jp（吉村）
+- tanaka@idex.co.jp（田中）
+- tashiro@idex.co.jp（田代）
+- tsuru@idex.co.jp（鶴）
 
-### 新規追加ユーザー
-- k-murakami@idex.co.jp（村上）
-- y-motoda@idex.co.jp（元田）
-- n-takuma@idex.co.jp（詫摩）
-- s-in@idex.co.jp（印）
+### 新規追加ユーザー（12名）
+- k-murakami@idex.co.jp（村上）⭐ NEW
+- y-motoda@idex.co.jp（元田）⭐ NEW
+- n-takuma@idex.co.jp（詫摩）⭐ NEW
+- s-in@idex.co.jp（印）⭐ NEW
+- s-ohgi@idex.co.jp（扇）⭐ NEW
+- s-takao@idex.co.jp（高尾）⭐ NEW
+- k-sekimoto@idex.co.jp（関本）⭐ NEW
+- kan-yoshimura@idex.co.jp（吉村(寛)）⭐ NEW
 - takao-tomoko@idex.co.jp（高尾知世）
 - sekimoto-kenji@idex.co.jp（関本健二）
 - suetsugu-takashi@idex.co.jp（末次孝）
