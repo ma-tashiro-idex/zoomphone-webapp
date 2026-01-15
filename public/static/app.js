@@ -743,7 +743,21 @@ async function loadDashboard() {
 function renderDealItem(deal) {
     const totalLicenses = deal.licenses.reduce(function(sum, l) { return sum + l.license_count; }, 0);
     const licenseDetails = deal.licenses.map(function(l) { return l.license_type + ' × ' + l.license_count; }).join(', ');
-    const date = new Date(deal.deal_date).toLocaleDateString('ja-JP');
+    
+    // 成約の場合は成約日、見込みの場合は最終更新日を表示
+    let dateLabel = '';
+    let dateValue = '';
+    if (deal.status === '成約' && deal.closed_date) {
+        dateLabel = '成約日';
+        dateValue = new Date(deal.closed_date).toLocaleDateString('ja-JP');
+    } else if (deal.status === '見込み' && deal.updated_at) {
+        dateLabel = '最終更新日';
+        dateValue = new Date(deal.updated_at).toLocaleDateString('ja-JP');
+    } else {
+        dateLabel = '登録日';
+        dateValue = new Date(deal.deal_date).toLocaleDateString('ja-JP');
+    }
+    
     const statusColor = deal.status === '成約' ? '#48bb78' : '#4299e1';
     const statusBg = deal.status === '成約' ? '#c6f6d5' : '#bee3f8';
     const statusTextColor = deal.status === '成約' ? '#22543d' : '#2c5282';
@@ -767,7 +781,7 @@ function renderDealItem(deal) {
     html += licenseDetails;
     html += '</div>';
     html += '<div style="color: #a0aec0; font-size: 12px;">';
-    html += '📅 登録日: ' + date;
+    html += '📅 ' + dateLabel + ': ' + dateValue;
     html += '</div>';
     html += '</div>';
     
@@ -861,16 +875,16 @@ window.showAddDealModal = function() {
                 </div>
                 
                 <div style="margin-bottom: 20px;">
-                    <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600;">登録日 *</label>
-                    <input type="date" id="dealDate" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
-                </div>
-                
-                <div style="margin-bottom: 20px;">
                     <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600;">ステータス *</label>
-                    <select id="dealStatus" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
+                    <select id="dealStatus" onchange="toggleClosedDateField()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
                         <option value="見込み">見込み</option>
                         <option value="成約">成約</option>
                     </select>
+                </div>
+                
+                <div id="closedDateContainer" style="margin-bottom: 20px; display: none;">
+                    <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600;">成約日 *</label>
+                    <input type="date" id="closedDate" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
                 </div>
                 
                 <div style="margin-bottom: 20px;">
@@ -895,11 +909,23 @@ window.showAddDealModal = function() {
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     
-    // Set today's date as default
-    document.getElementById('dealDate').valueAsDate = new Date();
+    // Set today's date as default for closed date
+    document.getElementById('closedDate').valueAsDate = new Date();
     
     // Add initial license row
     addLicenseRow();
+}
+
+// Toggle closed date field based on status
+window.toggleClosedDateField = function() {
+    const status = document.getElementById('dealStatus').value;
+    const closedDateContainer = document.getElementById('closedDateContainer');
+    
+    if (status === '成約') {
+        closedDateContainer.style.display = 'block';
+    } else {
+        closedDateContainer.style.display = 'none';
+    }
 }
 
 // Add license row
@@ -950,12 +976,17 @@ window.saveDeal = async function() {
         // Get form values
         const customerName = document.getElementById('customerName').value.trim();
         const salesRep = document.getElementById('salesRep').value;
-        const dealDate = document.getElementById('dealDate').value;
         const status = document.getElementById('dealStatus').value;
+        const closedDate = status === '成約' ? document.getElementById('closedDate').value : null;
         
         // Validate
-        if (!customerName || !salesRep || !dealDate) {
-            alert('顧客名、営業担当者、登録日は必須です');
+        if (!customerName || !salesRep) {
+            alert('顧客名、営業担当者は必須です');
+            return;
+        }
+        
+        if (status === '成約' && !closedDate) {
+            alert('成約日を入力してください');
             return;
         }
         
@@ -983,15 +1014,21 @@ window.saveDeal = async function() {
         
         // Save to API
         console.log('📝 案件保存中...');
+        const requestBody = {
+            customer_name: customerName,
+            sales_rep: salesRep,
+            status: status,
+            licenses: licenses
+        };
+        
+        // 成約の場合のみclosed_dateを追加
+        if (status === '成約' && closedDate) {
+            requestBody.closed_date = closedDate;
+        }
+        
         await apiCall(API_BASE + '/deals', {
             method: 'POST',
-            body: JSON.stringify({
-                customer_name: customerName,
-                sales_rep: salesRep,
-                deal_date: dealDate,
-                status: status,
-                licenses: licenses
-            })
+            body: JSON.stringify(requestBody)
         });
         
         console.log('✅ 案件保存成功');
@@ -1038,16 +1075,16 @@ window.editDeal = async function(dealId) {
                     </div>
                     
                     <div style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600;">登録日 *</label>
-                        <input type="date" id="dealDate" value="${deal.deal_date}" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
-                    </div>
-                    
-                    <div style="margin-bottom: 20px;">
                         <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600;">ステータス *</label>
-                        <select id="dealStatus" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
+                        <select id="dealStatus" onchange="toggleClosedDateField()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
                             <option value="見込み" ${deal.status === '見込み' ? 'selected' : ''}>見込み</option>
                             <option value="成約" ${deal.status === '成約' ? 'selected' : ''}>成約</option>
                         </select>
+                    </div>
+                    
+                    <div id="closedDateContainer" style="margin-bottom: 20px; display: ${deal.status === '成約' ? 'block' : 'none'};">
+                        <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 600;">成約日 *</label>
+                        <input type="date" id="closedDate" value="${deal.closed_date || ''}" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 14px;">
                     </div>
                     
                     <div style="margin-bottom: 20px;">
@@ -1092,12 +1129,17 @@ window.updateDeal = async function(dealId) {
         // Get form values
         const customerName = document.getElementById('customerName').value.trim();
         const salesRep = document.getElementById('salesRep').value;
-        const dealDate = document.getElementById('dealDate').value;
         const status = document.getElementById('dealStatus').value;
+        const closedDate = status === '成約' ? document.getElementById('closedDate').value : null;
         
         // Validate
-        if (!customerName || !salesRep || !dealDate) {
-            alert('顧客名、営業担当者、登録日は必須です');
+        if (!customerName || !salesRep) {
+            alert('顧客名、営業担当者は必須です');
+            return;
+        }
+        
+        if (status === '成約' && !closedDate) {
+            alert('成約日を入力してください');
             return;
         }
         
@@ -1125,15 +1167,21 @@ window.updateDeal = async function(dealId) {
         
         // Update via API
         console.log('📝 案件更新中...');
+        const requestBody = {
+            customer_name: customerName,
+            sales_rep: salesRep,
+            status: status,
+            licenses: licenses
+        };
+        
+        // 成約の場合のみclosed_dateを追加
+        if (status === '成約' && closedDate) {
+            requestBody.closed_date = closedDate;
+        }
+        
         await apiCall(API_BASE + '/deals/' + dealId, {
             method: 'PUT',
-            body: JSON.stringify({
-                customer_name: customerName,
-                sales_rep: salesRep,
-                deal_date: dealDate,
-                status: status,
-                licenses: licenses
-            })
+            body: JSON.stringify(requestBody)
         });
         
         console.log('✅ 案件更新成功');
